@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Enter your text and build its Huffman tree one step at a time. See frequencies, smallest-node selections, merges, binary codes and the full worked calculation.">
+  <meta name="theme-color" content="#14233e">
+  <title>Huffman Tree Generator</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2314233e'/%3E%3Cpath d='M16 8v7M16 15L8 24M16 15l8 9' stroke='%23c5d9ff' stroke-width='2' fill='none'/%3E%3Ccircle cx='16' cy='8' r='4' fill='%235991ff'/%3E%3Ccircle cx='8' cy='24' r='4' fill='%235991ff'/%3E%3Ccircle cx='24' cy='24' r='4' fill='%23ffb35a'/%3E%3C/svg%3E">
+  <style>
+    :root{color-scheme:light;--ink:#18263e;--muted:#526179;--line:#d1dbea;--paper:#f1f5fb;--white:#fff;--navy:#14233e;--blue:#2158c7;--blue-soft:#edf3ff;--orange:#94500a;--orange-soft:#fff0d9;--green:#116347;--green-soft:#e3f6ed;--purple:#7045b4;--radius:14px}
+    *{box-sizing:border-box} [hidden]{display:none!important}
+    body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.5 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    h1,h2,h3,p{margin:0} h1{font-size:clamp(1.55rem,3vw,2.1rem);letter-spacing:-.035em;line-height:1.15} h2{font-size:1.15rem;letter-spacing:-.02em;line-height:1.35} h3{font-size:1rem}
+    button,input,select,textarea{font:inherit} button{cursor:pointer} button:disabled{cursor:default;opacity:.43} textarea{resize:vertical} a{color:var(--blue);text-underline-offset:3px}
+    button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,summary:focus-visible,[tabindex]:focus-visible,a:focus-visible{outline:3px solid #f2a137;outline-offset:3px}
+    .shell{width:min(1450px,calc(100% - 40px));margin:auto} .topbar{background:var(--navy);color:white;padding:22px 0}.topbar .shell{display:flex;align-items:center;justify-content:space-between;gap:22px}.topbar p{color:#c9d7ef;margin-top:7px;font-size:.95rem}.subject{font-size:.8rem;letter-spacing:.09em;text-transform:uppercase;color:#b8d1fb;white-space:nowrap}
+    main.shell{padding-top:20px;padding-bottom:22px}.panel{background:var(--white);border:1px solid var(--line);border-radius:var(--radius);min-width:0}.input-panel{padding:18px 20px;margin-bottom:18px}.input-row{display:grid;grid-template-columns:1fr auto;gap:15px;align-items:end}.input-top{display:flex;gap:12px;justify-content:space-between;align-items:baseline;margin-bottom:7px}label{font-weight:750;font-size:.94rem}.count{color:var(--muted);font-size:.84rem}
+    textarea{display:block;width:100%;min-height:75px;border:1px solid #a7b9d3;border-radius:9px;padding:10px 12px;background:#fcfdff;color:var(--ink);line-height:1.6}.primary{color:white;background:var(--blue);border:1px solid var(--blue);font-weight:750;border-radius:9px;min-height:46px;padding:10px 18px;white-space:nowrap}.primary:not(:disabled):hover{background:#19449e}.secondary{border:1px solid #b9c9e0;color:var(--ink);background:white;min-height:42px;padding:8px 13px;border-radius:9px;font-size:.9rem;font-weight:650}.secondary:not(:disabled):hover{background:var(--blue-soft)}.examples{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:11px;font-size:.85rem;color:var(--muted)}.example{padding:5px 10px;min-height:34px;border-radius:7px;background:#f2f6fc;color:#344b70;border:1px solid #d6e0ed;font-size:.85rem}.example:hover{border-color:var(--blue)}.note{font-size:.85rem;color:var(--muted);margin-top:8px}.error{padding:10px 13px;color:#932b28;background:#fff0ef;border:1px solid #ebbbb7;border-radius:8px;margin-top:12px;font-size:.92rem}.dirty{padding:10px 14px;border-radius:9px;background:var(--orange-soft);color:#754009;border:1px solid #e8c18e;margin-bottom:14px}
+    .workspace{display:grid;grid-template-columns:265px minmax(0,1fr);gap:18px;align-items:start}.frequency-panel{padding:17px 16px;position:sticky;top:16px}.frequency-panel .note{margin-bottom:13px}.mini-stats{display:flex;gap:12px;margin-bottom:12px;padding:10px;background:#f3f7fc;border-radius:9px}.mini-stats div{flex:1}.mini-stats strong{display:block;font-size:1.4rem;line-height:1.2}.mini-stats span{font-size:.79rem;color:var(--muted)}.frequency-scroll{max-height:510px;overflow:auto}table{border-collapse:collapse;width:100%;font-size:.9rem}th{text-align:left;font-size:.81rem;font-weight:750;color:var(--muted);background:#f4f7fc}td,th{padding:9px 8px;border-bottom:1px solid #e0e7f1}td:last-child,th:last-child{text-align:right}.frequency-table th{position:sticky;top:0;z-index:1}.frequency-table tr.chosen td{background:var(--blue-soft)}.frequency-table tr.active td{background:var(--green-soft)}.symbol-name{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-weight:750}.freq-cell{display:flex;align-items:center;justify-content:flex-end;gap:7px}.bar{height:5px;min-width:3px;border-radius:2px;background:#6494ea}.aside-rule{padding-top:14px;margin-top:8px;border-top:1px solid var(--line);font-size:.86rem;color:var(--muted)}.aside-rule strong{color:var(--ink)}.work-main{min-width:0}.step-panel{padding:17px 20px 16px;margin-bottom:14px}.stage-line{display:flex;gap:12px;align-items:center;justify-content:space-between}.stage-pills{display:flex;gap:7px;flex-wrap:wrap}.stage-pill{padding:4px 8px;border-radius:6px;background:#edf1f7;color:var(--muted);font-size:.82rem;font-weight:700}.stage-pill.active{background:var(--navy);color:white}.step-counter{font-size:.85rem;color:var(--muted);white-space:nowrap}.step-heading{font-size:1.3rem;line-height:1.3;margin-top:13px;letter-spacing:-.025em}.step-copy{margin-top:7px;color:#425571;min-height:48px}.step-controls{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px}.control-group{display:flex;gap:7px;align-items:center;flex-wrap:wrap}.step-controls .primary{min-height:42px;padding:8px 15px;font-size:.9rem}.range-row{display:flex;gap:12px;align-items:center;margin-top:12px}.range-row label{font-size:.81rem;color:var(--muted);font-weight:500;white-space:nowrap}.range-row input{width:100%;accent-color:var(--blue)}.queue-panel{padding:14px 18px;margin-bottom:14px}.queue-head{display:flex;gap:12px;justify-content:space-between;align-items:baseline}.queue-head h3{font-size:.95rem}.queue-head p{font-size:.82rem;color:var(--muted)}.queue{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}.queue-item{display:flex;gap:9px;align-items:center;padding:6px 9px;border:1px solid #c9d5e5;background:#f8faff;border-radius:8px;font-size:.91rem}.queue-item b{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.queue-item .weight{background:#e6edf8;border-radius:5px;padding:1px 6px;min-width:25px;text-align:center;font-weight:750}.queue-item.chosen{border:2px solid var(--blue);padding:5px 8px;background:var(--blue-soft)}.queue-item.new{border:2px solid #c9791d;padding:5px 8px;background:var(--orange-soft)}.queue-item.new .weight{background:#ffe0af}.queue-note{font-size:.82rem;color:var(--muted);margin-top:9px}
+    .tree-panel{overflow:hidden}.tree-head{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}.tree-head p{font-size:.82rem;color:var(--muted);margin-top:3px}.zoom-controls{display:flex;align-items:center;gap:5px}.zoom-controls button{background:#f1f5fb;border:1px solid var(--line);border-radius:7px;height:35px;min-width:35px;font-size:.92rem}.zoom-controls .zoom-value{min-width:57px;font-size:.8rem}.tree-surface{overflow:auto;min-height:330px;max-height:680px;background-color:#fcfdff;background-image:radial-gradient(#dbe4f2 .8px,transparent .8px);background-size:17px 17px;padding:12px 0;overscroll-behavior:contain}.tree-svg{display:block;margin:auto;max-width:none}.tree-svg .edge{stroke:#a2b1c8;stroke-width:2;fill:none}.tree-svg .edge.path{stroke:var(--green);stroke-width:4}.tree-svg .edge.fresh{stroke:#c8781b;stroke-width:3}.edge-bit-bg{fill:#fcfdff}.edge-bit{font:750 14px system-ui,sans-serif;fill:#365782}.edge-bit.one{fill:var(--purple)}.tree-node .shape{fill:white;stroke:#9fb2ce;stroke-width:1.6}.tree-node.internal .shape{fill:#edf3fd;stroke:#7491bd}.tree-node.chosen .shape{fill:#e5efff;stroke:var(--blue);stroke-width:3}.tree-node.new .shape{fill:#fff0d7;stroke:#bc6b11;stroke-width:3}.tree-node.path .shape{fill:#e3f6ed;stroke:var(--green);stroke-width:3}.tree-node .node-symbol{font:750 16px ui-monospace,SFMono-Regular,Consolas,monospace;fill:var(--ink)}.tree-node .node-weight{font:650 14px system-ui,sans-serif;fill:#435672}.tree-node .parent-weight{font:800 19px system-ui,sans-serif;fill:var(--ink)}.tree-node .parent-label{font:600 12px system-ui,sans-serif;fill:#526179}.tree-node .node-code{font:750 13px ui-monospace,SFMono-Regular,Consolas,monospace;fill:var(--green)}.tree-node[data-leaf]{cursor:pointer}.tree-node[data-leaf]:hover .shape{stroke:var(--green);stroke-width:3}.tree-legend{display:flex;gap:15px;flex-wrap:wrap;padding:10px 18px;border-top:1px solid var(--line);font-size:.8rem;color:var(--muted)}.legend-box{display:inline-block;width:11px;height:11px;border:2px solid var(--blue);border-radius:3px;margin-right:5px;vertical-align:-1px}.legend-box.orange{border-color:#bc6b11;background:var(--orange-soft)}.zero-label{color:var(--blue);font-weight:750}.one-label{color:var(--purple);font-weight:750}.path-readout{border-top:1px solid #b8dcca;padding:12px 18px;background:var(--green-soft);color:#15563e;font-size:.92rem;overflow-wrap:anywhere}
+    .results{margin-top:18px}.results-head{padding:18px 20px 14px}.results-head p{margin-top:5px;color:var(--muted);font-size:.9rem}.results-grid{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:20px;padding:0 20px 20px}.code-scroll{max-height:540px;overflow:auto;border:1px solid var(--line);border-radius:9px}.code-table{min-width:420px}.code-table th{position:sticky;top:0;z-index:1}.code-table td code{font-size:.91rem;font-weight:700;color:var(--green);overflow-wrap:anywhere}.code-table tr.active td{background:var(--green-soft)}.symbol-button{background:transparent;border:0;border-radius:4px;padding:4px 2px;color:var(--ink);font-weight:750;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;text-align:left;min-height:32px}.symbol-button:hover{text-decoration:underline}.code-table tfoot{background:#edf3fd;font-weight:800}.metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px}.metric{padding:13px;background:#f1f5fc;border:1px solid #d8e3f0;border-radius:10px}.metric span{display:block;font-size:.83rem;color:var(--muted)}.metric strong{display:block;font-size:1.5rem;line-height:1.25;margin-top:5px}.metric small{display:block;font-size:.8rem;color:var(--muted);margin-top:6px}.math-box{margin-top:13px;border-left:3px solid var(--blue);background:#f5f8ff;padding:11px 13px;font-size:.92rem}.math-box p+p{margin-top:7px}.math-value{overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.86rem}.size-note{font-size:.84rem;color:var(--muted);margin-top:12px}.encoding{border-top:1px solid var(--line);padding:18px 20px}.encoding p{font-size:.89rem;color:var(--muted);margin-top:5px}.encoded-chunks{display:flex;gap:6px;flex-wrap:wrap;max-height:230px;overflow:auto;margin-top:12px;padding:3px}.chunk{display:flex;flex-direction:column;align-items:center;gap:4px;border:1px solid #cbd8ea;border-radius:7px;padding:6px 9px;background:#f7faff;min-width:40px;max-width:100%;font-size:.85rem}.chunk b{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.9rem}.chunk code{color:#315b99;overflow-wrap:anywhere}.chunk.active{background:var(--green-soft);border-color:var(--green)}.bitstream{margin-top:9px;font:500 .91rem/1.7 ui-monospace,SFMono-Regular,Consolas,monospace;min-height:72px;max-height:180px;overflow-wrap:anywhere}.encoding label{margin-top:13px;display:block;font-size:.86rem}.decoder{margin:0 20px 20px;border:1px solid var(--line);border-radius:10px}.decoder summary,.method summary{cursor:pointer;padding:13px 15px;font-size:.95rem;font-weight:750}.decoder-body{padding:0 15px 15px}.decoder-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}.decoder-actions span{margin-left:auto;font-size:.83rem;color:var(--muted)}.decoder-current{padding:10px 12px;background:#eef5ff;border-radius:8px;margin-top:11px;font-size:.9rem;min-height:48px}.decoded-output{padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:#fafcfe;white-space:pre-wrap;overflow-wrap:anywhere;max-height:200px;overflow:auto;margin-top:9px;min-height:46px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}.method{margin-top:18px}.method-body{padding:0 20px 18px;display:grid;grid-template-columns:1fr 1fr;gap:24px;font-size:.91rem;color:var(--muted)}.method-body ol{margin:0;padding-left:20px}.method-body li{margin-bottom:6px}.method-body p+p{margin-top:9px}.method-body strong{color:var(--ink)}footer{display:flex;gap:20px;justify-content:space-between;margin-top:16px;color:var(--muted);font-size:.81rem}.sr-only{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+    @media(max-width:1100px){.workspace{grid-template-columns:220px minmax(0,1fr)}.results-grid{grid-template-columns:1fr}.frequency-panel{padding:15px 12px}.subject{display:none}}
+    @media(max-width:760px){.shell{width:calc(100% - 24px)}.topbar{padding:18px 0}.input-panel{padding:14px}.input-row{grid-template-columns:1fr}.input-row .primary{justify-self:start}.workspace{grid-template-columns:1fr}.frequency-panel{position:static}.frequency-scroll{max-height:190px}.frequency-panel .mini-stats{max-width:330px}.aside-rule{margin-top:6px;padding-top:10px}.stage-line{align-items:flex-start;gap:8px;flex-wrap:wrap}.step-panel{padding:15px}.step-copy{min-height:0}.step-controls{align-items:stretch}.queue-head{flex-wrap:wrap;gap:4px}.tree-head{padding:12px;align-items:flex-start}.tree-surface{min-height:280px;max-height:550px}.tree-legend{padding:10px 12px;gap:10px}.results-grid{padding:0 14px 14px}.results-head,.encoding{padding:15px 14px}.decoder{margin:0 14px 15px}.method-body{grid-template-columns:1fr;gap:12px;padding:0 15px 15px}footer{display:block}footer p+p{margin-top:4px}}
+    @media(max-width:760px){.tree-head{flex-wrap:wrap}}
+    @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+    @media print{body{background:white}.topbar{background:white;color:var(--ink);padding:0}.topbar p{color:var(--muted)}.shell{width:100%}.input-panel,.step-controls,.range-row,.zoom-controls,.examples,footer{display:none}.frequency-panel{position:static}.workspace{display:block}.frequency-scroll,.tree-surface,.code-scroll,.encoded-chunks{max-height:none}.tree-panel,.results{break-inside:avoid}.tree-surface{overflow:visible}.method{display:none}}
+  </style>
+</head>
+<body>
+  <header class="topbar"><div class="shell"><div><h1>Huffman Tree Generator</h1><p>Enter a sentence. Build its tree.</p></div><span class="subject">CSE 4295</span></div></header>
+  <main class="shell">
+    <form id="inputForm" class="panel input-panel">
+      <div class="input-row"><div><div class="input-top"><label for="sourceText">Your text</label><span id="inputCount" class="count">13 characters</span></div><textarea id="sourceText" rows="2" spellcheck="false" aria-describedby="inputHelp">quickbrownfox</textarea></div><button class="primary" id="buildButton" type="submit">Build example</button></div>
+      <div class="examples"><span>Try:</span><button type="button" class="example" data-example="quickbrownfox">quickbrownfox</button><button type="button" class="example" data-example="BANANA">BANANA</button><button type="button" class="example" data-example="AAAAABBC">AAAAABBC</button><button type="button" class="example" data-example="ThisisHuffmancoding">Random Sentence</button></div>
+      <p class="note" id="inputHelp">Case, spaces and punctuation count. Classroom limit: 2,000 characters and 64 different symbols.</p>
+      <p id="inputError" class="error" role="alert" hidden></p>
+    </form>
+    <noscript><p class="error">Enable JavaScript and open this HTML file in a browser to use the lab.</p></noscript>
+    <p id="dirtyNotice" class="dirty" role="status" hidden>The text changed. Select <strong>Build example</strong> to update the lesson below.</p>
+    <div id="lesson">
+      <div class="workspace">
+        <aside class="panel frequency-panel" aria-labelledby="frequencyTitle">
+          <h2 id="frequencyTitle">Character frequencies</h2><p class="note">How many times does each symbol occur?</p>
+          <div class="mini-stats"><div><strong id="totalCount">13</strong><span>characters</span></div><div><strong id="distinctCount">12</strong><span>different symbols</span></div></div>
+          <div class="frequency-scroll"><table class="frequency-table"><thead><tr><th>Symbol</th><th>Count</th></tr></thead><tbody id="frequencyRows"></tbody></table></div>
+          <p class="aside-rule"><strong>The rule:</strong> always join the <strong>two smallest</strong> available frequencies. Put their sum back into the list.</p>
+        </aside>
+        <section class="work-main" aria-label="Huffman tree construction">
+          <div class="panel step-panel">
+            <div class="stage-line"><div class="stage-pills"><span id="countStage" class="stage-pill active">1 · Count</span><span id="mergeStage" class="stage-pill">2 · Merge</span><span id="codeStage" class="stage-pill">3 · Read codes</span></div><span id="stepCounter" class="step-counter"></span></div>
+            <div role="status" aria-live="polite" aria-atomic="true"><h2 id="stepTitle" class="step-heading"></h2><p id="stepCopy" class="step-copy"></p></div>
+            <div class="step-controls"><div class="control-group"><button id="previousStep" class="secondary" type="button">← Back</button><button id="nextStep" class="primary" type="button">Next step →</button></div><div class="control-group"><button id="autoPlay" class="secondary" type="button">Auto play</button><button id="finishTree" class="secondary" type="button">Show final tree</button></div></div>
+            <div class="range-row"><label for="stepRange">Go to step</label><input id="stepRange" type="range" min="0" max="1" value="0"></div>
+          </div>
+          <div class="panel queue-panel"><div class="queue-head"><h3 id="queueTitle">Available nodes · smallest first</h3><p id="queueCount"></p></div><div id="queue" class="queue" role="list" aria-label="Available nodes"></div><p id="queueNote" class="queue-note"></p></div>
+          <div class="panel tree-panel">
+            <div class="tree-head"><div><h2 id="treeTitle">The tree grows here</h2><p id="treeHelp">Each leaf shows a symbol and its frequency.</p></div><div class="zoom-controls" aria-label="Tree zoom"><button id="zoomOut" type="button" aria-label="Zoom out">−</button><button id="zoomReset" class="zoom-value" type="button" aria-label="Reset zoom">100%</button><button id="zoomIn" type="button" aria-label="Zoom in">+</button></div></div>
+            <div id="treeSurface" class="tree-surface" tabindex="0" aria-label="Tree diagram. Scroll horizontally for wide trees."><svg id="treeSvg" class="tree-svg" xmlns="http://www.w3.org/2000/svg" role="group" aria-label="Huffman tree diagram"></svg></div>
+            <div class="tree-legend"><span><i class="legend-box" aria-hidden="true"></i>Chosen nodes</span><span><i class="legend-box orange" aria-hidden="true"></i>New parent</span><span><b class="zero-label">0</b> = left edge</span><span><b class="one-label">1</b> = right edge</span><span>Wide trees can scroll.</span></div>
+            <p id="pathReadout" class="path-readout" hidden></p>
+          </div>
+        </section>
+      </div>
+      <section id="results" class="panel results" aria-labelledby="resultsTitle" hidden>
+        <div class="results-head"><h2 id="resultsTitle">Your worked example</h2><p>Follow the edges from the root to a symbol. The 0s and 1s form its code. Select a symbol to highlight that path.</p></div>
+        <div class="results-grid">
+          <div class="code-scroll"><table class="code-table"><thead><tr><th>Symbol</th><th>Frequency</th><th>Code</th><th>Length</th><th>f × length</th></tr></thead><tbody id="codeRows"></tbody><tfoot><tr><td colspan="4">Total encoded bits</td><td id="codeTotal"></td></tr></tfoot></table></div>
+          <div><div class="metrics"><div class="metric"><span>Huffman payload</span><strong id="payloadBits"></strong><small id="averageBits"></small></div><div class="metric"><span>Fixed-length payload</span><strong id="fixedBits"></strong><small id="fixedExplanation"></small></div></div><div class="math-box"><p><strong>Add frequency × code length:</strong></p><p id="costFormula" class="math-value"></p><p id="savingsText"></p></div><p id="utf8Note" class="size-note"></p><p class="size-note"><strong>These are payload bits.</strong> A real compressed file also needs its tree/codebook and framing. Short messages may take more total space once that information is included.</p><p id="prefixNote" class="size-note">The codes are prefix-free: no complete code is the beginning of another complete code. This lets the receiver separate the symbols.</p></div>
+        </div>
+        <div class="encoding"><h3>Encode your text</h3><p id="chunkNote">Replace each symbol with its code, keeping the original order.</p><div id="encodedChunks" class="encoded-chunks"></div><label for="encodedBits">Complete encoded bitstream</label><textarea id="encodedBits" class="bitstream" rows="3" readonly spellcheck="false"></textarea></div>
+        <details id="decoderDetails" class="decoder"><summary>See how the same tree decodes the bits</summary><div class="decoder-body"><p class="note">Start at the root. Read 0 to go left or 1 to go right. At a leaf, write its symbol and start again at the root.</p><div class="decoder-actions"><button type="button" id="readBit" class="secondary">Read next bit</button><button type="button" id="decodeAll" class="secondary">Decode all</button><button type="button" id="resetDecoder" class="secondary">Restart decoding</button><span id="decodeProgress"></span></div><p id="decodeExplanation" class="decoder-current" role="status" aria-live="polite"></p><p class="note">Recovered text</p><div id="decodedOutput" class="decoded-output" aria-label="Decoded text"></div></div></details>
+      </section>
+    </div>
+    <details class="panel method"><summary>The rule, equal frequencies and special cases</summary><div class="method-body"><ol><li>Count each symbol’s frequency.</li><li>Sort the available nodes from smallest to largest.</li><li>Take the two smallest nodes. Their sum becomes a new parent.</li><li>Put that parent back into the sorted list. Repeat until one root remains.</li><li>Assign 0 to left edges and 1 to right edges. Read each symbol’s code from the root.</li></ol><div><p><strong>Equal frequencies:</strong> this app chooses the node created earlier. Original symbols are created in the order they first appear; new parents are created later. The first selected node goes left (0), the second goes right (1). Other consistent tie choices can give different valid codes with the same minimum total bit cost.</p><p><strong>One different symbol:</strong> there is nothing to merge. This lesson assigns code 0 to each occurrence.</p><p><strong>Text is kept exactly:</strong> uppercase and lowercase differ; spaces, tabs and line breaks count. A symbol here means one Unicode code point, so some accented characters and joined emoji use more than one symbol.</p><p><strong>Lossless:</strong> decoding the generated bits with the same tree reproduces the original text. Huffman coding minimizes the weighted code length among binary prefix codes for the supplied symbol frequencies.</p><p><a href="https://algs4.cs.princeton.edu/55compression/" target="_blank" rel="noopener noreferrer">Algorithm reference · Princeton</a></p></div></div></details>
+    <footer><p>CSE 4295.</p><p>Multimedia Communications</p></footer>
+  </main>
+  <script id="huffman-core">
+    'use strict';
+    const Huffman = (() => {
+      const compare = (a,b) => a.weight-b.weight || a.order-b.order;
+      function label(symbol) {
+        if (symbol===' ') return '␠';
+        if (symbol==='\n') return '↵';
+        if (symbol==='\t') return '⇥';
+        if (symbol==='\r') return '␍';
+        if (/\p{C}|\p{Z}|[\uFE00-\uFE0F]/u.test(symbol)) return 'U+'+symbol.codePointAt(0).toString(16).toUpperCase().padStart(4,'0');
+        if (/\p{M}/u.test(symbol)) return '◌'+symbol;
+        return symbol;
+      }
+      function name(symbol) {
+        if (symbol===' ') return 'space';
+        if (symbol==='\n') return 'line break';
+        if (symbol==='\t') return 'tab';
+        if (symbol==='\r') return 'carriage return';
+        return '“'+label(symbol)+'”';
+      }
+      const nodeName = node => node.symbol!==null ? name(node.symbol) : node.label;
+      function build(text) {
+        if (typeof text!=='string') throw new Error('Enter text to build an example.');
+        const chars=Array.from(text);
+        if (!chars.length) throw new Error('Enter at least one character. Spaces also count as characters.');
+        if (chars.length>2000) throw new Error('This classroom view supports up to 2,000 characters. Please use a shorter example. Your text has not been truncated.');
+        const counts=new Map();
+        chars.forEach(symbol=>counts.set(symbol,(counts.get(symbol)||0)+1));
+        if (counts.size>64) throw new Error('This classroom view supports up to 64 different symbols. Please use fewer different symbols so the tree stays manageable. Your text has not been changed.');
+        let order=0;
+        const nodes=Array.from(counts,([symbol,weight])=>({id:'n'+order,order:order++,symbol,weight,left:null,right:null,label:label(symbol)}));
+        const leaves=[...nodes];
+        let queue=[...leaves].sort(compare);
+        const states=[{kind:'count',roots:[...queue],selected:[],parent:null,merge:0}];
+        const merges=[];
+        while(queue.length>1) {
+          const before=[...queue], left=queue.shift(), right=queue.shift();
+          const parent={id:'n'+order,order:order++,symbol:null,weight:left.weight+right.weight,left,right,label:'N'+(merges.length+1)};
+          nodes.push(parent);
+          const merge=merges.length+1;
+          states.push({kind:'select',roots:before,selected:[left.id,right.id],parent:null,merge,left,right});
+          states.push({kind:'join',roots:[...queue,parent],selected:[left.id,right.id],parent:parent.id,merge,left,right});
+          queue.push(parent);queue.sort(compare);
+          states.push({kind:'insert',roots:[...queue],selected:[],parent:parent.id,merge,left,right});
+          merges.push({left,right,parent,before,after:[...queue]});
+        }
+        const root=queue[0], codes=new Map();
+        function visit(node,bits) {
+          if(node.symbol!==null){codes.set(node.symbol,bits||'0');return;}
+          visit(node.left,bits+'0');visit(node.right,bits+'1');
+        }
+        visit(root,'');
+        states.push({kind:'codes',roots:[root],selected:[],parent:null,merge:merges.length});
+        const encoded=chars.map(symbol=>codes.get(symbol)).join('');
+        const fixedWidth=Math.max(1,Math.ceil(Math.log2(counts.size)));
+        return {text,chars,counts,leaves,nodes,byId:new Map(nodes.map(node=>[node.id,node])),root,codes,states,merges,encoded,fixedWidth,fixedBits:chars.length*fixedWidth,utf8Bits:new TextEncoder().encode(text).length*8};
+      }
+      function pathFor(model,symbol) {
+        if(!model.codes.has(symbol)) throw new Error('Unknown symbol.');
+        let node=model.root;const path=[node.id];
+        if(node.symbol!==null) return path;
+        for(const bit of model.codes.get(symbol)){node=bit==='0'?node.left:node.right;path.push(node.id);}
+        return path;
+      }
+      function decode(model,bits) {
+        if(typeof bits!=='string'||/[^01]/.test(bits)) throw new Error('The bitstream may contain only 0 and 1.');
+        if(model.root.symbol!==null){if(bits.includes('1'))throw new Error('The single-symbol code is 0.');return model.root.symbol.repeat(bits.length);}
+        let node=model.root;const output=[];
+        for(const bit of bits){node=bit==='0'?node.left:node.right;if(node.symbol!==null){output.push(node.symbol);node=model.root;}}
+        if(node!==model.root) throw new Error('The bitstream ends partway through a code.');
+        return output.join('');
+      }
+      function decodeFrame(model,position) {
+        if(!Number.isInteger(position)||position<0||position>model.encoded.length) throw new Error('Invalid decoding position.');
+        let node=model.root,path=[node.id],partial='',lastSymbol=null,lastCode='',lastBit=null;
+        const output=[];
+        for(let i=0;i<position;i++){
+          if(node===model.root){path=[node.id];partial='';}
+          const bit=model.encoded[i];lastBit=bit;lastSymbol=null;partial+=bit;
+          if(model.root.symbol===null){node=bit==='0'?node.left:node.right;path.push(node.id);}
+          if(node.symbol!==null){lastSymbol=node.symbol;lastCode=partial;output.push(node.symbol);node=model.root;}
+        }
+        return {position,path,partial,lastSymbol,lastCode,lastBit,decoded:output.join(''),complete:position===model.encoded.length};
+      }
+      function layout(roots,minWidth=0) {
+        const plotted=[],edges=[];let cursor=38,maxDepth=0;
+        function place(node,depth){
+          maxDepth=Math.max(maxDepth,depth);let x;
+          if(node.symbol!==null){x=cursor;cursor+=68;}
+          else {const a=place(node.left,depth+1),b=place(node.right,depth+1);x=(a.x+b.x)/2;edges.push({parent:node.id,child:node.left.id,bit:'0',x1:x,y1:56+depth*90,x2:a.x,y2:a.y},{parent:node.id,child:node.right.id,bit:'1',x1:x,y1:56+depth*90,x2:b.x,y2:b.y});}
+          const p={node,x,y:56+depth*90,depth};plotted.push(p);return p;
+        }
+        roots.forEach(root=>{place(root,0);cursor+=12;});
+        const natural=Math.max(180,cursor-68-12+38),width=Math.max(natural,minWidth),offset=(width-natural)/2;
+        plotted.forEach(p=>p.x+=offset);edges.forEach(e=>{e.x1+=offset;e.x2+=offset;});
+        return {nodes:plotted,edges,width,height:Math.max(270,56+maxDepth*90+72),maxDepth};
+      }
+      return {build,compare,label,name,nodeName,pathFor,decode,decodeFrame,layout};
+    })();
+  </script>
+  <script id="huffman-ui">
+    (()=>{
+      'use strict';
+      const $=id=>document.getElementById(id);
+      const escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      let model=null,step=0,dirty=false,timer=null,zoom=1,selectedSymbol=null,decodePosition=0,pathMode='code';
+      const current=()=>model.states[step];
+      const isFinal=()=>model&&current().kind==='codes';
+      function stop(){if(timer!==null){clearInterval(timer);timer=null;}$('autoPlay').textContent='Auto play';}
+      function updateInputCount(){$('inputCount').textContent=Array.from($('sourceText').value).length.toLocaleString()+' characters';}
+      function showInputError(message){$('inputError').textContent=message;$('inputError').hidden=false;$('sourceText').setAttribute('aria-invalid','true');}
+      function buildLesson(text){
+        stop();let next;
+        try{next=Huffman.build(text);}catch(error){showInputError(error.message);$('lesson').hidden=true;model=null;dirty=false;$('dirtyNotice').hidden=true;return false;}
+        model=next;step=0;dirty=false;zoom=1;selectedSymbol=model.leaves[0].symbol;decodePosition=0;pathMode='code';
+        $('sourceText').value=text;updateInputCount();$('inputError').hidden=true;$('sourceText').removeAttribute('aria-invalid');$('dirtyNotice').hidden=true;$('lesson').hidden=false;$('decoderDetails').open=false;
+        $('totalCount').textContent=model.chars.length.toLocaleString();$('distinctCount').textContent=model.counts.size;
+        $('stepRange').max=model.states.length-1;
+        renderFrequency();renderResultData();renderStep();
+        return true;
+      }
+      function description(state){
+        const name=Huffman.nodeName;
+        if(state.kind==='count') return {title:'Count every symbol, then sort',copy:model.counts.size===1?'There is only one different symbol. No merge is needed. Next, give it code 0 by convention.':model.chars.length+' characters give '+model.counts.size+' different symbols. Each starts as a leaf. The available nodes below are ordered from smallest frequency to largest.'};
+        if(state.kind==='select') return {title:'Merge '+state.merge+' · Choose the two smallest',copy:name(state.left)+' has frequency '+state.left.weight+' and '+name(state.right)+' has frequency '+state.right.weight+'. These are the first two nodes in the sorted list. They will become siblings.'};
+        const parent=state.parent?model.byId.get(state.parent):null;
+        if(state.kind==='join') return {title:'Merge '+state.merge+' · '+state.left.weight+' + '+state.right.weight+' = '+parent.weight,copy:'Join '+name(state.left)+' and '+name(state.right)+' under '+parent.label+'. Its frequency is their sum, '+parent.weight+'. The first child goes left (0); the second goes right (1). Now put the parent back in order.'};
+        if(state.kind==='insert') return {title:'Merge '+state.merge+' · Put '+parent.label+' back in order',copy:state.roots.length===1?'Only one node remains. Its total frequency is '+parent.weight+', matching the '+model.chars.length+' input characters. This is the root. Next, read the codes.':parent.label+' ('+parent.weight+') is back in the sorted list. There are '+state.roots.length+' available nodes. Next, choose the two smallest again—including this new parent if it is one of them.'};
+        return {title:'The tree is complete · Read the codes',copy:model.counts.size===1?'One symbol means one leaf and no merges. This lesson uses code 0 for every occurrence. The worked calculation is below.':'Start at the root and follow 0 on the left, 1 on the right. Stop at a symbol. Those bits are its Huffman code. Select a leaf to trace its path; the worked calculation is below.'};
+      }
+      function controls(){
+        if(!model)return;
+        $('previousStep').disabled=dirty||step===0;$('nextStep').disabled=dirty||step===model.states.length-1;$('finishTree').disabled=dirty||isFinal();$('stepRange').disabled=dirty;
+        $('autoPlay').disabled=dirty||isFinal();$('autoPlay').textContent=timer!==null?'Pause':'Auto play';
+        $('zoomOut').disabled=zoom<=.6;$('zoomIn').disabled=zoom>=1.6;$('zoomReset').textContent=Math.round(zoom*100)+'%';
+        $('readBit').disabled=dirty||decodePosition===model.encoded.length;$('decodeAll').disabled=dirty||decodePosition===model.encoded.length;$('resetDecoder').disabled=dirty||decodePosition===0;
+      }
+      function renderFrequency(){
+        if(!model)return;
+        const max=Math.max(...model.leaves.map(node=>node.weight));
+        $('frequencyRows').innerHTML=[...model.leaves].sort(Huffman.compare).map(node=>'<tr data-frequency="'+node.id+'"><td><span class="symbol-name" title="'+escape(Huffman.name(node.symbol))+'">'+escape(Huffman.label(node.symbol))+'</span></td><td><div class="freq-cell"><span class="bar" style="width:'+Math.round(node.weight/max*55)+'px"></span><strong>'+node.weight+'</strong></div></td></tr>').join('');
+      }
+      function updateHighlights(){
+        if(!model)return;
+        const selected=new Set(current().selected);
+        document.querySelectorAll('[data-frequency]').forEach(row=>{const node=model.byId.get(row.dataset.frequency);row.classList.toggle('chosen',selected.has(node.id));row.classList.toggle('active',isFinal()&&pathMode==='code'&&node.symbol===selectedSymbol);});
+        document.querySelectorAll('[data-code-row]').forEach(row=>row.classList.toggle('active',pathMode==='code'&&model.byId.get(row.dataset.codeRow).symbol===selectedSymbol));
+        document.querySelectorAll('[data-chunk]').forEach(button=>button.classList.toggle('active',pathMode==='code'&&model.chars[Number(button.dataset.chunk)]===selectedSymbol));
+      }
+      function renderQueue(state){
+        $('queueTitle').textContent=state.kind==='join'?'After joining · ready to sort':isFinal()?'One root contains every symbol':'Available nodes · smallest first';
+        $('queueCount').textContent=state.roots.length+' node'+(state.roots.length===1?'':'s');
+        $('queue').innerHTML=state.roots.map(node=>'<div role="listitem" class="queue-item'+(state.selected.includes(node.id)?' chosen':'')+(state.parent===node.id?' new':'')+'" title="'+escape(Huffman.nodeName(node))+', frequency '+node.weight+', creation order '+(node.order+1)+'"><b>'+escape(node.label)+'</b><span class="weight">'+node.weight+'</span></div>').join('');
+        $('queueNote').textContent=state.kind==='join'?'The new parent is shown at the end for this step. Next, sort it back into the list.':isFinal()?'The root’s frequency equals the number of characters in the input.':'Tie rule: for equal frequencies, use the node created earlier. Original symbols are created in first-appearance order.';
+      }
+      function activePath(){
+        if(!isFinal())return [];
+        return pathMode==='decode'?Huffman.decodeFrame(model,decodePosition).path:Huffman.pathFor(model,selectedSymbol);
+      }
+      function renderTree(){
+        if(!model)return;
+        const state=current(),geometry=Huffman.layout(state.roots,Math.max(260,$('treeSurface').clientWidth-4));
+        const path=activePath(),highlight=new Set(path),pathEdges=new Set(path.slice(1));
+        const freshEdges=state.kind==='join'?new Set(state.selected):new Set();
+        let svg='<title>Huffman '+(isFinal()?'tree':'forest')+'</title><desc>'+state.roots.length+' available roots. Each parent stores the sum of its children. Left edges are 0 and right edges are 1.</desc>';
+        for(const edge of geometry.edges){
+          const x=(edge.x1+edge.x2)/2,y=(edge.y1+edge.y2)/2;
+          svg+='<path class="edge'+(pathEdges.has(edge.child)?' path':'')+(freshEdges.has(edge.child)?' fresh':'')+'" d="M '+edge.x1+' '+(edge.y1+24)+' L '+edge.x2+' '+(edge.y2-25)+'"/>';
+          svg+='<rect class="edge-bit-bg" x="'+(x-9)+'" y="'+(y-10)+'" width="18" height="21" rx="5"/><text class="edge-bit'+(edge.bit==='1'?' one':'')+'" x="'+x+'" y="'+(y+5)+'" text-anchor="middle">'+edge.bit+'</text>';
+        }
+        for(const point of geometry.nodes){
+          const node=point.node,leaf=node.symbol!==null,chosen=state.selected.includes(node.id),fresh=state.parent===node.id;
+          let attrs='';
+          if(leaf&&isFinal())attrs=' data-leaf="'+node.id+'" tabindex="0" role="button" aria-label="'+escape(Huffman.name(node.symbol))+', frequency '+node.weight+', code '+model.codes.get(node.symbol)+'"';
+          svg+='<g class="tree-node '+(leaf?'leaf':'internal')+(chosen?' chosen':'')+(fresh?' new':'')+(highlight.has(node.id)?' path':'')+'" transform="translate('+point.x+','+point.y+')"'+attrs+'>';
+          if(leaf){
+            const text=node.label,small=text.startsWith('U+')?' style="font-size:12px"':'';
+            svg+='<rect class="shape" x="-28" y="-25" width="56" height="50" rx="9"/><text class="node-symbol" text-anchor="middle" y="-4"'+small+'>'+escape(text)+'</text><text class="node-weight" text-anchor="middle" y="16">'+node.weight+'</text>';
+            if(isFinal()){
+              const code=model.codes.get(node.symbol),shown=code.length>6?code.slice(0,5)+'…':code;
+              svg+='<text class="node-code" text-anchor="middle" y="44"><title>Full code: '+code+'</title>'+shown+'</text>';
+            }
+          }
+          else svg+='<circle class="shape" r="24"/><text class="parent-label" text-anchor="middle" y="-32">'+node.label+'</text><text class="parent-weight" text-anchor="middle" y="7">'+node.weight+'</text>';
+          svg+='</g>';
+        }
+        $('treeSvg').setAttribute('viewBox','0 0 '+geometry.width+' '+geometry.height);$('treeSvg').setAttribute('width',geometry.width*zoom);$('treeSvg').setAttribute('height',geometry.height*zoom);$('treeSvg').innerHTML=svg;
+        $('treeTitle').textContent=isFinal()?'Final Huffman tree':state.kind==='count'?'Start with one leaf per symbol':'Building the tree';
+        $('treeHelp').textContent=isFinal()?'Select a leaf to read its full code and path from the root.':'Leaf: symbol + frequency. Parent: sum of its children.';
+        $('pathReadout').hidden=!isFinal();
+        if(isFinal()&&pathMode==='code'){
+          const bits=model.codes.get(selectedSymbol),frequency=model.counts.get(selectedSymbol);
+          $('pathReadout').textContent=model.counts.size===1?Huffman.name(selectedSymbol)+': code 0 by convention. '+frequency+' occurrences × 1 bit = '+frequency+' bits.':Huffman.name(selectedSymbol)+': root → '+Array.from(bits,bit=>bit==='0'?'left (0)':'right (1)').join(' → ')+' → '+Huffman.name(selectedSymbol)+'. Code '+bits+'; '+frequency+' × '+bits.length+' = '+(frequency*bits.length)+' bits.';
+        }else if(isFinal()){
+          const frame=Huffman.decodeFrame(model,decodePosition);
+          $('pathReadout').textContent=decodePosition===0?'Decoding begins at the root. Read the first bit.':'Decoding path: '+frame.partial+'. '+(frame.lastSymbol!==null?'Reached '+Huffman.name(frame.lastSymbol)+'. Write that symbol, then return to the root before the next bit.':'No leaf yet. Keep reading bits.');
+        }
+      }
+      function renderStep(){
+        if(!model)return;
+        const state=current(),copy=description(state);
+        $('stepTitle').textContent=copy.title;$('stepCopy').textContent=copy.copy;$('stepCounter').textContent='Step '+(step+1)+' of '+model.states.length;$('stepRange').value=step;
+        $('countStage').classList.toggle('active',state.kind==='count');$('mergeStage').classList.toggle('active',!['count','codes'].includes(state.kind));$('codeStage').classList.toggle('active',isFinal());
+        $('results').hidden=!isFinal();renderQueue(state);renderTree();updateHighlights();renderDecoder();controls();
+      }
+      function setStep(index){
+        if(!model||dirty)return;
+        if(!Number.isInteger(index)||index<0||index>=model.states.length)throw new Error('Choose a valid lesson step.');
+        step=index;decodePosition=0;pathMode='code';if(isFinal())stop();renderStep();
+      }
+      function chooseSymbol(symbol){if(!model||!isFinal()||dirty||!model.codes.has(symbol))return;const focused=document.activeElement?.getAttribute('data-leaf');selectedSymbol=symbol;pathMode='code';renderTree();updateHighlights();if(focused)$('treeSvg').querySelector('[data-leaf="'+focused+'"]')?.focus({preventScroll:true});}
+      function renderResultData(){
+        $('codeRows').innerHTML=model.leaves.map(node=>{const code=model.codes.get(node.symbol);return '<tr data-code-row="'+node.id+'"><td><button type="button" class="symbol-button" data-code-symbol="'+node.id+'" aria-label="Trace code for '+escape(Huffman.name(node.symbol))+'">'+escape(node.label)+'</button></td><td>'+node.weight+'</td><td><code>'+code+'</code></td><td>'+code.length+'</td><td>'+node.weight+' × '+code.length+' = '+node.weight*code.length+'</td></tr>';}).join('');
+        const bits=model.encoded.length,average=bits/model.chars.length,saved=model.fixedBits-bits;
+        $('codeTotal').textContent=bits.toLocaleString();$('payloadBits').textContent=bits.toLocaleString()+' bits';$('averageBits').textContent=average.toFixed(3)+' bits per character';$('fixedBits').textContent=model.fixedBits.toLocaleString()+' bits';
+        $('fixedExplanation').textContent=model.chars.length+' characters × '+model.fixedWidth+' bits';
+        $('costFormula').textContent=model.leaves.map(node=>node.weight+'×'+model.codes.get(node.symbol).length).join(' + ')+' = '+bits+' bits';
+        $('savingsText').textContent=saved===0?'For this example, Huffman ties the fixed-length payload size.':saved+' payload bits saved ('+(saved/model.fixedBits*100).toFixed(1)+'%) compared with fixed-length codes for these '+model.counts.size+' symbols.';
+        $('utf8Note').textContent='The fixed-length baseline uses '+model.fixedWidth+' bit'+(model.fixedWidth===1?'':'s')+' per symbol '+(model.counts.size===1?'by the same single-symbol convention.':'(⌈log₂ '+model.counts.size+'⌉).')+' The original text occupies '+model.utf8Bits+' bits as UTF-8.';
+        $('prefixNote').textContent=model.counts.size===1?'There is one distinct symbol. This lesson uses the nonempty code 0, so each 0 represents one occurrence.':'The codes are prefix-free: no complete code is the beginning of another complete code. This lets the receiver separate the symbols.';
+        $('encodedBits').value=model.encoded;
+        const shown=model.chars.slice(0,120);$('chunkNote').textContent='Replace each symbol with its code, keeping the original order.'+(model.chars.length>120?' First 120 characters shown as tiles; the complete bitstream is below.':'');
+        $('encodedChunks').innerHTML=shown.map((symbol,index)=>'<button type="button" class="chunk" data-chunk="'+index+'" title="'+escape(Huffman.name(symbol))+' → '+model.codes.get(symbol)+'"><b>'+escape(Huffman.label(symbol))+'</b><code>'+model.codes.get(symbol)+'</code></button>').join('');
+      }
+      function renderDecoder(){
+        if(!model)return;
+        const frame=Huffman.decodeFrame(model,decodePosition);
+        $('decodeProgress').textContent=decodePosition+' / '+model.encoded.length+' bits read';
+        $('decodedOutput').textContent=frame.decoded||'No symbols decoded yet.';
+        if(decodePosition===0)$('decodeExplanation').textContent='Ready at the root. Read one bit to begin.';
+        else if(frame.complete)$('decodeExplanation').textContent='All bits decoded. The recovered text matches your original input exactly.';
+        else if(frame.lastSymbol!==null)$('decodeExplanation').textContent='Read '+frame.lastBit+'. Code '+frame.lastCode+' reaches '+Huffman.name(frame.lastSymbol)+'. Write that symbol, then return to the root.';
+        else $('decodeExplanation').textContent='Read '+frame.lastBit+': move '+(frame.lastBit==='0'?'left':'right')+'. The path so far is '+frame.partial+'. Keep going until you reach a leaf.';
+      }
+      function moveDecoder(position){if(!model||dirty||!isFinal())return;decodePosition=position;pathMode='decode';renderDecoder();renderTree();updateHighlights();controls();}
+      $('inputForm').addEventListener('submit',event=>{event.preventDefault();buildLesson($('sourceText').value);});
+      $('sourceText').addEventListener('input',()=>{stop();updateInputCount();dirty=!!model&&$('sourceText').value!==model.text;$('dirtyNotice').hidden=!dirty;$('inputError').hidden=true;$('sourceText').removeAttribute('aria-invalid');controls();});
+      document.querySelectorAll('[data-example]').forEach(button=>button.addEventListener('click',()=>buildLesson(button.dataset.example)));
+      $('previousStep').addEventListener('click',()=>{stop();setStep(step-1);});$('nextStep').addEventListener('click',()=>{stop();setStep(step+1);});$('finishTree').addEventListener('click',()=>{stop();setStep(model.states.length-1);});$('stepRange').addEventListener('input',()=>{stop();setStep(Number($('stepRange').value));});
+      $('autoPlay').addEventListener('click',()=>{if(timer!==null){stop();controls();return;}if(!model||dirty||isFinal())return;timer=setInterval(()=>{if(!model||dirty||isFinal()){stop();controls();return;}setStep(step+1);},1700);controls();});
+      document.addEventListener('visibilitychange',()=>{if(document.hidden){stop();controls();}});
+      function setZoom(value){zoom=Math.max(.6,Math.min(1.6,Math.round(value*100)/100));renderTree();controls();}
+      $('zoomOut').addEventListener('click',()=>setZoom(zoom-.15));$('zoomIn').addEventListener('click',()=>setZoom(zoom+.15));$('zoomReset').addEventListener('click',()=>setZoom(1));
+      $('treeSvg').addEventListener('click',event=>{const leaf=event.target.closest('[data-leaf]');if(leaf)chooseSymbol(model.byId.get(leaf.dataset.leaf).symbol);});
+      $('treeSvg').addEventListener('keydown',event=>{const leaf=event.target.closest('[data-leaf]');if(leaf&&(event.key==='Enter'||event.key===' ')){event.preventDefault();chooseSymbol(model.byId.get(leaf.dataset.leaf).symbol);}});
+      $('codeRows').addEventListener('click',event=>{const button=event.target.closest('[data-code-symbol]');if(button)chooseSymbol(model.byId.get(button.dataset.codeSymbol).symbol);});
+      $('encodedChunks').addEventListener('click',event=>{const button=event.target.closest('[data-chunk]');if(button)chooseSymbol(model.chars[Number(button.dataset.chunk)]);});
+      $('readBit').addEventListener('click',()=>moveDecoder(decodePosition+1));$('decodeAll').addEventListener('click',()=>moveDecoder(model.encoded.length));$('resetDecoder').addEventListener('click',()=>moveDecoder(0));
+      window.addEventListener('resize',()=>renderTree());
+      buildLesson($('sourceText').value);
+
+      const context=document.modelContext;
+      if(context&&typeof context.registerTool==='function'){
+        const lifecycle=new AbortController();
+        const state=()=>model?{text:model.text,step:step+1,steps:model.states.length,phase:current().kind,explanation:description(current()).copy,queue:current().roots.map(node=>({name:Huffman.nodeName(node),frequency:node.weight})),codes:isFinal()?Object.fromEntries(model.codes):null,encodedBits:isFinal()?model.encoded:null,dirty}:null;
+        const register=tool=>{try{Promise.resolve(context.registerTool(tool,{signal:lifecycle.signal})).catch(()=>{});}catch{}};
+        register({name:'read_huffman_lesson',title:'Read Huffman lesson',description:'Read the current text, tree-construction step, available nodes and revealed results.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true,untrustedContentHint:true},execute(input){if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).length)throw new Error('Expected an empty object.');return state();}});
+        register({name:'build_huffman_example',title:'Build Huffman example',description:'Replace the current lesson with a worked Huffman example for supplied text. Starts at frequency counting.',inputSchema:{type:'object',properties:{text:{type:'string',minLength:1}},required:['text'],additionalProperties:false},annotations:{readOnlyHint:false,untrustedContentHint:true},execute(input){if(!input||typeof input!=='object'||typeof input.text!=='string'||Object.keys(input).some(key=>key!=='text'))throw new Error('Provide only a text string.');Huffman.build(input.text);buildLesson(input.text);return state();}});
+        register({name:'go_to_huffman_step',title:'Go to Huffman step',description:'Show a numbered step in the current example. Step numbers begin at 1; use the last step to reveal the final codes.',inputSchema:{type:'object',properties:{step:{type:'integer',minimum:1}},required:['step'],additionalProperties:false},annotations:{readOnlyHint:false,untrustedContentHint:true},execute(input){if(!input||typeof input!=='object'||!Number.isInteger(input.step)||Object.keys(input).some(key=>key!=='step'))throw new Error('Provide only an integer step.');if(!model||dirty||input.step<1||input.step>model.states.length)throw new Error('Build a lesson and choose a step within its range.');stop();setStep(input.step-1);return state();}});
+        window.addEventListener('pagehide',()=>lifecycle.abort(),{once:true});
+      }
+    })();
+  </script>
+</body>
+</html>
