@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#132641">
+  <meta name="description" content="An interactive CRC classroom lab. Generate check bits, follow XOR long division step by step, flip transmitted bits and inspect the receiver's remainder. Works offline.">
+  <title>Cyclic Redundancy Check</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23132641'/%3E%3Cpath d='M7 8h18M7 15h8M7 23h8' stroke='white' stroke-width='3'/%3E%3Cpath d='m19 21 3 3 5-7' fill='none' stroke='%236de0c6' stroke-width='3'/%3E%3C/svg%3E">
+  <style>
+    :root{color-scheme:light;--ink:#192b43;--muted:#52647b;--navy:#132641;--blue:#2058c4;--blue-hover:#164496;--blue-bg:#edf4ff;--teal:#0b7160;--teal-bg:#e8f7f2;--red:#ab243c;--red-bg:#fff0f2;--amber:#805209;--amber-bg:#fff6df;--line:#d5deea;--bg:#f1f4f9;--mono:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace}
+    *{box-sizing:border-box}body{margin:0;font:16px/1.55 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);background:var(--bg)}h1,h2,h3,p{margin:0}h1{font-size:clamp(24px,3vw,30px);letter-spacing:-.035em;line-height:1.2}h2{font-size:21px;line-height:1.35}h3{font-size:16px;line-height:1.4}button,input{font:inherit}button{min-height:44px;border:1px solid var(--line);border-radius:8px;padding:9px 14px;background:white;color:var(--ink);font-weight:650;line-height:1.35;cursor:pointer}button:hover:not(:disabled){border-color:#86a6d1;background:#f5f8fe}button:disabled{cursor:default;opacity:.42}.primary{background:var(--blue);border-color:var(--blue);color:white}.primary:hover:not(:disabled){background:var(--blue-hover)}button:focus-visible,input:focus-visible,a:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:3px solid #e58a10;outline-offset:3px}input{width:100%;border:1px solid #a7b8ce;border-radius:8px;padding:11px 12px;min-height:49px;background:#fff;color:var(--ink);font:19px/1.4 var(--mono);letter-spacing:.055em}label{display:block;margin-bottom:7px;font-size:14px;font-weight:700}code,.mono{font-family:var(--mono)}code{overflow-wrap:anywhere}a{color:var(--blue)}[hidden]{display:none!important}.muted{color:var(--muted)}.small{font-size:14px}.eyebrow{font-size:12px;font-weight:750;letter-spacing:.095em;text-transform:uppercase}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}.skip{position:absolute;left:12px;top:-80px;background:#fff;padding:10px;z-index:20}.skip:focus{top:12px}
+    .topbar{background:var(--navy);color:white;border-bottom:4px solid #38b59b}.topbar-inner{max-width:1390px;margin:auto;padding:22px 28px;display:flex;align-items:center;justify-content:space-between;gap:24px}.brand{display:flex;align-items:center;gap:15px}.brand-mark{border:1px solid #6884a8;border-radius:9px;padding:13px 9px;font:700 16px/1 var(--mono);color:#a9f0df;background:#223b59}.topbar p{color:#d3dfef;font-size:14px;margin-top:5px}.download{color:white;border-color:#6c809b;background:transparent;white-space:nowrap;font-size:14px}.download:hover:not(:disabled){color:white;background:#284364;border-color:#9bb3d3}.shell{max-width:1390px;margin:auto;padding:24px 28px 34px;display:grid;gap:20px}.panel{background:white;border:1px solid var(--line);border-radius:12px;box-shadow:0 2px 4px #16264005;min-width:0}.input-panel{padding:20px 22px}.input-grid{display:grid;grid-template-columns:minmax(210px,1fr) minmax(170px,.6fr) auto;gap:18px;align-items:end}.input-grid button{min-height:49px;white-space:nowrap}.input-grid .field-note{display:block;margin-top:5px;font-size:13px;color:var(--muted)}.submit-wrap{padding-bottom:25px}.examples{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:13px}.examples button{font-size:14px;padding:6px 11px;min-height:36px;background:#f6f8fc}.input-help{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:11px;font-size:13px;color:var(--muted)}.feedback{font-size:14px;background:var(--blue-bg);border-left:3px solid var(--blue);padding:10px 12px;margin-top:12px}.feedback.error{color:var(--red);background:var(--red-bg);border-color:var(--red)}.overview{display:grid;grid-template-columns:1fr 1.1fr .7fr;border-top:1px solid var(--line);border-radius:0 0 12px 12px;overflow:hidden;background:#fbfcff}.overview-item{padding:14px 20px;border-right:1px solid var(--line);min-width:0}.overview-item:last-child{border:0;background:var(--teal-bg)}.overview-item .label{font-size:13px;color:var(--muted)}.overview-item .value{font:650 19px/1.5 var(--mono);margin-top:4px;overflow-wrap:anywhere}.overview-item .sub{margin-top:4px;font-size:13px;color:var(--muted)}.data-color{color:var(--blue)}.crc-color{color:var(--teal)}.pad-color{color:#63758d;background:#e5ebf3;border-radius:3px;padding:1px 3px}.bit-string{overflow-wrap:anywhere;font-family:var(--mono);font-weight:650}.code-pill{display:inline-block;font:600 14px var(--mono);padding:3px 7px;background:#eef3fb;border:1px solid #d5dfef;border-radius:5px;overflow-wrap:anywhere}
+    .tabs{display:flex;gap:0;padding:0 20px;background:#f8faff;border-bottom:1px solid var(--line);border-radius:12px 12px 0 0}.tab{border:0;border-bottom:3px solid transparent;background:transparent;border-radius:0;padding:15px 20px;display:flex;align-items:center;gap:10px}.tab[aria-selected="true"]{border-bottom-color:var(--blue);color:var(--blue-hover);background:#fff}.tab-number{font:650 13px var(--mono);border:1px solid #a8bbd3;border-radius:5px;min-width:26px;padding:2px}.tab[aria-selected="true"] .tab-number{background:var(--blue);color:white;border-color:var(--blue)}.lesson-heading{padding:20px 22px 0;display:flex;justify-content:space-between;gap:18px;align-items:start}.lesson-heading p{font-size:14px;color:var(--muted);margin-top:6px;max-width:890px}.generator-badge{font-size:14px;white-space:nowrap;text-align:right}.generator-badge code{display:block;color:var(--blue-hover);font-weight:700}.setup-strip{margin:16px 22px 0;padding:12px 15px;border:1px solid var(--line);border-radius:8px;background:#f8faff;display:flex;justify-content:space-between;gap:15px;align-items:center;flex-wrap:wrap}.setup-strip p{font-size:14px}.setup-strip code{font-size:17px;color:var(--blue-hover)}.controls{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:18px 22px 13px}.controls button{font-size:14px}.text-button{color:var(--muted);background:transparent;border-color:transparent}.step-count{margin-right:auto;color:var(--blue-hover);font-weight:750;font-variant-numeric:tabular-nums}.progress{height:3px;background:#e8eef7;margin:0 22px}.progress span{display:block;height:100%;background:var(--blue);width:0;transition:width .16s ease}.calculation-grid{display:grid;grid-template-columns:minmax(0,1fr) 288px;gap:20px;padding:18px 22px 22px;align-items:start}.division-box{border:1px solid var(--line);border-radius:9px;overflow:hidden;min-width:0}.division-title{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:11px 15px;border-bottom:1px solid var(--line);background:#f9fbfe}.division-title span{font-size:13px;color:var(--muted)}.division-scroll{max-height:515px;overflow:auto;scrollbar-color:#9ab1ca #f2f6fb;background:white}.division-scroll svg{display:block;max-width:none}.plot-caption{padding:10px 14px;font-size:13px;color:var(--muted);border-top:1px solid var(--line);background:#fbfcff}.plot-caption strong{color:var(--teal)}.explain-card{background:var(--blue-bg);border:1px solid #bfd1f0;border-radius:9px;overflow:hidden}.explain-head{padding:14px 16px;border-bottom:1px solid #cbdaf1}.explain-head h3{margin-top:4px}.explain-body{padding:14px 16px}.xor-block{display:grid;grid-template-columns:48px minmax(0,1fr);gap:6px 9px;align-items:center;margin-bottom:14px;font-size:14px}.xor-block .digits{font:650 21px/1.4 var(--mono);letter-spacing:.10em;overflow-wrap:anywhere}.xor-rule{grid-column:1/-1;border-bottom:2px solid #7393bd;margin:0 0 1px 46px}.xor-answer{color:var(--blue-hover)}.explain-body p{font-size:14px;margin-top:10px}.explain-body .large{font:700 19px/1.5 var(--mono);margin-top:5px;overflow-wrap:anywhere}.bring{color:var(--teal);font-weight:700}.mini-rule{background:white;border:1px solid #cad8eb;border-radius:7px;padding:10px 12px;margin-top:14px}.mini-rule p{margin:0;font-size:13px;color:var(--muted)}.xor-truth{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin-top:7px;font:13px/1.5 var(--mono)}.learn-note{padding:12px 14px;background:#f6f8fc;border:1px solid var(--line);border-radius:8px;font-size:14px;margin-top:14px;color:var(--muted)}
+    .channel{margin:18px 22px 0;padding:17px 18px;border:1px solid var(--line);border-radius:10px;background:#fafcff}.channel-top{display:flex;justify-content:space-between;align-items:start;gap:20px}.channel-top p{font-size:14px;color:var(--muted);margin-top:4px}.legend{display:flex;gap:13px;flex-wrap:wrap;font-size:13px;margin:12px 0 8px}.legend span{display:flex;align-items:center;gap:5px}.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--blue)}.legend i.crc{background:var(--teal)}.legend i.flipped{background:var(--red)}.received-bits{display:flex;gap:6px;flex-wrap:wrap}.bit-button{min-width:41px;min-height:56px;position:relative;padding:5px 8px;background:var(--blue-bg);color:var(--blue-hover);border-color:#b5ccef;display:flex;flex-direction:column;align-items:center;line-height:1.2}.bit-button .bit-value{font:750 22px/1.15 var(--mono)}.bit-button .bit-number{font:12px/1.2 var(--mono);margin-top:5px;color:#5e7088}.bit-button.crc{background:var(--teal-bg);border-color:#9ccdbd;color:var(--teal)}.bit-button.flipped,.bit-button.flipped:hover{background:var(--red-bg);color:var(--red);border-color:#d45269;box-shadow:inset 0 -3px #be3049}.bit-button.flipped .bit-number{color:var(--red)}.channel-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:13px}.channel-actions button{font-size:14px;min-height:39px;padding:7px 12px}.changed-count{font-size:14px;color:var(--muted);margin-left:auto}.receiver-verdict{margin-top:15px;padding:13px 15px;border-radius:8px;border:1px solid #9acbbb;background:var(--teal-bg);color:var(--teal)}.receiver-verdict.error{background:var(--red-bg);color:var(--red);border-color:#e4a1ae}.receiver-verdict.missed{background:var(--amber-bg);color:var(--amber);border-color:#dec48b}.receiver-verdict .verdict-line{display:flex;gap:15px;justify-content:space-between;align-items:center;flex-wrap:wrap}.receiver-verdict strong{font-size:17px}.receiver-verdict p{font-size:14px;margin-top:6px}.receiver-verdict code{font-size:18px;font-weight:750}.simulation-note{margin-top:10px;font-size:14px;color:var(--muted)}
+    .result-box{margin:0 22px 22px;padding:17px 18px;border:1px solid #9fcdbc;border-radius:9px;background:var(--teal-bg)}.result-title{display:flex;justify-content:space-between;gap:15px;align-items:center}.result-title h3{color:var(--teal);font-size:17px}.result-title span{font-size:13px;color:var(--muted)}.result-code{font:700 23px/1.5 var(--mono);margin-top:10px;overflow-wrap:anywhere}.frame-data{color:var(--blue-hover)}.frame-crc{color:var(--teal);background:#c7ecdc;padding:3px 4px;border-radius:4px;margin-left:5px}.result-box p{margin-top:10px;font-size:14px;color:#335f50}.result-box .sub-labels{display:flex;gap:18px;font-size:13px;margin-top:6px}.result-box.error{border-color:#e4a1ae;background:var(--red-bg)}.result-box.error h3{color:var(--red)}.result-box.error p{color:#873745}.result-box.missed{border-color:#dec48b;background:var(--amber-bg)}.result-box.missed h3{color:var(--amber)}.result-box.missed p{color:#72592e}.worked{margin:0 22px 22px;border:1px solid var(--line);border-radius:9px;overflow:hidden}.worked summary{cursor:pointer;padding:13px 16px;font-weight:650;font-size:14px;background:#f6f8fc}.worked .table-note{padding:11px 15px;font-size:13px;color:var(--muted)}.table-scroll{overflow:auto;max-height:480px}.worked table{width:100%;min-width:670px;border-collapse:separate;border-spacing:0;text-align:left;font-size:15px}.worked th{background:var(--navy);color:white;position:sticky;top:0;z-index:1;padding:11px 12px;font-size:13px}.worked td{padding:10px 12px;border-bottom:1px solid #e3eaf4;vertical-align:top}.worked tr:last-child td{border-bottom:0}.worked tr:nth-child(even){background:#f7f9fd}.worked tr.active{background:#e6efff}.worked code{font-size:15px}.row-button{font:650 13px var(--mono);min-height:28px;min-width:28px;padding:3px 7px}.worked tr.active .row-button{color:#fff;background:var(--blue);border-color:var(--blue)}.concept{padding:17px 22px}.concept summary{font-size:14px;font-weight:650;cursor:pointer}.concept-grid{display:grid;grid-template-columns:1fr 1fr;gap:25px;margin-top:16px;color:var(--muted);font-size:14px}.concept-grid p+p{margin-top:10px}.polynomial{font-family:var(--mono);color:var(--ink);font-weight:650;overflow-wrap:anywhere}.polynomial sup{font-size:.75em}footer{font-size:13px;color:var(--muted);display:flex;justify-content:space-between;gap:15px;padding:0 2px}.noscript{background:var(--amber-bg);padding:20px;color:var(--amber)}
+    @media(max-width:1080px){.input-grid{grid-template-columns:1fr 1fr}.submit-wrap{grid-column:1/-1;padding:0}.submit-wrap button{min-height:44px}.calculation-grid{grid-template-columns:minmax(0,1fr) 265px;gap:15px}.xor-block .digits{font-size:19px}.overview-item .value{font-size:17px}}
+    @media(max-width:850px){.calculation-grid{grid-template-columns:1fr}.aside-panel{display:grid;grid-template-columns:1fr 1fr;gap:15px}.learn-note{margin:0;align-self:start}.overview{grid-template-columns:1fr 1fr}.overview-item:last-child{grid-column:1/-1;border-top:1px solid var(--line)}.overview-item:nth-child(2){border-right:0}.generator-badge{display:none}.channel-top{display:block}}
+    @media(max-width:560px){.topbar-inner{padding:18px 16px;align-items:start;gap:12px}.brand-mark{display:none}.topbar p{font-size:13px;max-width:240px}.download{font-size:13px;padding:8px 10px;white-space:normal;max-width:100px}.shell{padding:15px 12px 25px;gap:15px}.input-panel{padding:17px 16px}.input-grid{grid-template-columns:1fr;gap:12px}.submit-wrap{grid-column:auto}.submit-wrap button{width:100%}.input-help{gap:5px}.overview{grid-template-columns:1fr}.overview-item{border:0;border-bottom:1px solid var(--line);padding:12px 16px}.overview-item:last-child{grid-column:auto;border-top:0}.tabs{padding:0 4px}.tab{flex:1;justify-content:center;font-size:14px;padding:14px 9px;gap:6px}.tab-number{display:none}.lesson-heading{padding:18px 16px 0}.setup-strip{margin:14px 16px 0;padding:11px 12px}.controls{padding:16px 16px 12px;gap:7px}.controls button{font-size:13px;padding:8px 10px}.step-count{width:100%;margin-bottom:3px}.progress{margin:0 16px}.calculation-grid{padding:15px 16px 18px;gap:15px}.aside-panel{grid-template-columns:1fr}.division-title{display:block;padding:11px 12px}.division-title span{display:block;margin-top:3px}.division-scroll{max-height:440px}.channel{margin:15px 16px 0;padding:14px 12px}.bit-button{min-width:38px;padding:5px 7px}.received-bits{gap:5px}.changed-count{margin-left:0;width:100%;margin-top:3px}.channel-actions button{font-size:13px;padding:7px 10px}.result-box{margin:0 16px 17px;padding:15px}.result-code{font-size:20px}.result-title{align-items:start}.worked{margin:0 16px 17px}.concept{padding:15px 16px}.concept-grid{grid-template-columns:1fr;gap:15px}footer{flex-direction:column;gap:4px}}
+    @media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+    @media print{body{background:#fff;font-size:12px}.download,.controls,.examples,.feedback,footer,.progress,.channel-actions,.concept{display:none!important}.topbar{background:#fff;color:#000;border-color:#333}.topbar p{color:#444}.brand-mark{display:none}.shell{padding:10px;max-width:none}.panel{box-shadow:none}.input-panel{padding:10px}.input-grid{grid-template-columns:1fr 1fr}.submit-wrap{display:none}.overview{grid-template-columns:1fr 1fr 1fr}.overview-item:last-child{grid-column:auto}.tabs{padding:0}.tab{padding:8px}.tab-number{display:none}.calculation-grid{display:block}.division-scroll{max-height:none;overflow:visible}.division-scroll svg{max-width:100%;height:auto}.aside-panel{display:none}.worked{break-inside:avoid}.table-scroll{max-height:none;overflow:visible}.worked table{min-width:0}.worked th{position:static;background:#eee;color:#000}.result-box{break-inside:avoid}.channel{break-inside:avoid}}
+  </style>
+</head>
+<body>
+  <a class="skip" href="#data-input">Skip to the data bits</a>
+  <header class="topbar"><div class="topbar-inner"><div class="brand"><div class="brand-mark" aria-hidden="true">CRC</div><div><h1>Cyclic Redundancy Check</h1></div></div></div></header>
+  <noscript><p class="noscript">Enable JavaScript to calculate CRCs and explore the division steps. The downloaded HTML works offline.</p></noscript>
+  <main class="shell">
+    <section class="panel" aria-label="Set up a CRC example">
+      <form class="input-panel" id="crc-form" novalidate>
+        <div class="input-grid">
+          <div><label for="data-input">Data bits D</label><input id="data-input" type="text" value="1101011011" autocomplete="off" spellcheck="false" inputmode="numeric" aria-describedby="data-help"><span class="field-note" id="data-help">The message to send · 1–64 bits</span></div>
+          <div><label for="generator-input">Generator G</label><input id="generator-input" type="text" value="10011" autocomplete="off" spellcheck="false" inputmode="numeric" aria-describedby="generator-help"><span class="field-note" id="generator-help">2–17 bits · starts and ends with 1</span></div>
+          <div class="submit-wrap"><button class="primary" type="submit">Calculate CRC</button></div>
+        </div>
+        <div class="examples"><span class="small muted">Try:</span><button type="button" data-example="classic">10-bit example</button><button type="button" data-example="short">Short example</button><button type="button" data-example="zeros">All-zero data</button></div>
+        <div class="input-help"><span>Use 0s and 1s. Spaces are ignored; leading zeros are kept.</span><span>Both ends use the same generator.</span></div>
+        <p id="input-feedback" class="feedback" role="status" hidden></p>
+      </form>
+      <div class="overview"><div class="overview-item"><p class="label">1 · Original data</p><p class="value data-color" id="data-summary"></p><p class="sub" id="data-length"></p></div><div class="overview-item"><p class="label" id="padding-title">2 · Append zeros</p><p class="value" id="padded-summary"></p><p class="sub" id="padding-rule"></p></div><div class="overview-item"><p class="label">3 · CRC remainder</p><p class="value crc-color" id="crc-summary"></p><p class="sub" id="crc-length"></p></div></div>
+    </section>
+
+    <section class="panel" aria-label="CRC sender and receiver">
+      <div class="tabs" role="tablist" aria-label="Choose sender or receiver"><button id="sender-tab" class="tab" type="button" role="tab" aria-selected="true" aria-controls="lesson-panel" data-mode="sender"><span class="tab-number" aria-hidden="true">01</span>Sender · create CRC</button><button id="receiver-tab" class="tab" type="button" role="tab" aria-selected="false" aria-controls="lesson-panel" tabindex="-1" data-mode="receiver"><span class="tab-number" aria-hidden="true">02</span>Receiver · check errors</button></div>
+      <div id="lesson-panel" role="tabpanel" aria-labelledby="sender-tab" tabindex="0">
+        <div class="lesson-heading"><div><h2 id="lesson-title">Append zeros, then divide</h2><p id="lesson-description"></p></div><div class="generator-badge"><span class="muted">Using generator</span><code id="generator-badge"></code></div></div>
+        <div id="sender-setup" class="setup-strip"><p id="sender-equation"></p><p id="degree-note"></p></div>
+        <section id="channel" class="channel" aria-labelledby="channel-title" hidden>
+          <div class="channel-top"><div><h3 id="channel-title">Click a received bit to flip it</h3><p>The sender’s frame stays the same. You change what arrives at the receiver.</p></div></div>
+          <div class="legend"><span><i aria-hidden="true"></i>Data bits</span><span><i class="crc" aria-hidden="true"></i>CRC bits</span><span><i class="flipped" aria-hidden="true"></i>Changed bit</span></div>
+          <div id="received-bits" class="received-bits" role="group" aria-label="Received frame; click a bit to change it"></div>
+          <div class="channel-actions"><button type="button" id="one-error">One-bit error</button><button type="button" id="missed-error">Undetected example</button><button type="button" id="restore-frame">Restore original</button><span id="changed-count" class="changed-count"></span></div>
+          <div id="receiver-verdict" class="receiver-verdict" aria-live="polite"><div class="verdict-line"><strong id="verdict-title"></strong><span>Remainder <code id="syndrome"></code></span></div><p id="verdict-description"></p></div>
+          <p id="simulation-note" class="simulation-note"></p>
+        </section>
+        <div class="controls"><span id="step-count" class="step-count" aria-live="polite"></span><button id="restart" class="text-button" type="button">Restart</button><button id="previous" type="button">← Previous</button><button id="next" class="primary" type="button">Next step →</button><button id="show-all" type="button">Show full division</button></div>
+        <div class="progress" aria-hidden="true"><span id="progress-fill"></span></div>
+        <div class="calculation-grid">
+          <div class="division-box"><div class="division-title"><h3>XOR long division</h3><span>Use XOR; there is no borrowing.</span></div><div id="division-scroll" class="division-scroll" role="region" aria-label="XOR long division; scroll to see all bits and steps" tabindex="0"><svg id="division-svg" role="img" aria-labelledby="svg-title svg-description"></svg></div><p class="plot-caption">A <strong>teal digit</strong> is brought down from the original dividend. Leading zeros stay visible to show the alignment.</p></div>
+          <aside class="aside-panel"><section class="explain-card" aria-label="Current division step"><div class="explain-head"><p class="eyebrow muted" id="explain-number"></p><h3 id="explain-title"></h3></div><div class="explain-body" id="step-explanation" aria-live="polite" aria-atomic="true"></div></section><div class="learn-note"><strong>One rule at every step</strong><p style="margin-top:6px">If the group starts with <b>1</b>, XOR with the generator. If it starts with <b>0</b>, XOR with all zeros. Drop the leading zero and bring down the next bit.</p></div></aside>
+        </div>
+        <div id="result-box" class="result-box"><div class="result-title"><h3 id="result-title"></h3><span id="result-size"></span></div><div id="result-code" class="result-code"></div><div id="frame-labels" class="sub-labels"><span class="data-color">Original data</span><span class="crc-color">CRC bits</span></div><p id="result-description"></p></div>
+        <details class="worked" id="worked-table"><summary>Worked division table · all steps</summary><p class="table-note">Select a step number to inspect that operation in the drawing above. On the last row, the remaining bits are the remainder.</p><div class="table-scroll"><table><caption id="table-caption" class="sr-only"></caption><thead><tr><th scope="col">Step</th><th scope="col">Current bits</th><th scope="col">XOR with</th><th scope="col">XOR result</th><th scope="col">Bring down</th><th scope="col">Next bits / remainder</th></tr></thead><tbody id="table-body"></tbody></table></div></details>
+      </div>
+    </section>
+    <details class="panel concept"><summary>Why does this work?</summary><div class="concept-grid"><div><p><strong>The sender:</strong> a generator with r + 1 bits needs r check bits. Append r zeros to the data, divide using XOR, and replace those zeros with the remainder. The resulting frame divides evenly by the generator.</p><p><strong>The receiver:</strong> divide the entire received frame by the same generator. Do not append extra zeros. A nonzero remainder detects an error; a zero remainder means no error was detected.</p><p><strong>CRC does not correct errors.</strong> A zero remainder can also occur for some changed frames. The undetected example demonstrates this limitation.</p></div><div><p><strong>Generator as a polynomial</strong></p><p id="polynomial" class="polynomial"></p><p>Each 1 includes a power of x; each 0 omits it. The leftmost bit gives the highest power.</p></div></div></details>
+    <footer><span>Developed by <a href="https://f-farhan.github.io/">Faisal Farhan</a> for CSE 4295 Course,AUST </span><span>Designed and developed with assistance from Claude and ChatGPT</span></footer>
+  </main>
+  <script id="crc-core">
+  const CRC = (() => {
+    function inputError(message, field) { const error = new Error(message); error.field = field; return error; }
+    function bits(raw, name, maximum, field) {
+      if (typeof raw !== 'string') throw inputError(name + ' must be a string of 0s and 1s.', field);
+      const value = raw.replace(/\s/g, '');
+      if (!value.length) throw inputError('Enter ' + name.toLowerCase() + '.', field);
+      if (!/^[01]+$/.test(value)) throw inputError(name + ' can contain only 0 and 1; spaces are allowed.', field);
+      if (value.length > maximum) throw inputError(name + ' must have at most ' + maximum + ' bits.', field);
+      return value;
+    }
+    function generator(raw) {
+      const value = bits(raw, 'Generator', 17, 'generator-input');
+      if (value.length < 2) throw inputError('The generator needs at least 2 bits.', 'generator-input');
+      if (value[0] !== '1' || value.at(-1) !== '1') throw inputError('The generator must start and end with 1.', 'generator-input');
+      return value;
+    }
+    function divide(dividend, divisor) {
+      if (!/^[01]+$/.test(dividend) || !/^[01]+$/.test(divisor) || divisor[0] !== '1' || divisor.length < 2 || dividend.length < divisor.length) throw new Error('Invalid binary division.');
+      const work = Array.from(dividend, Number), width = divisor.length, steps = [];
+      let quotient = '';
+      for (let position = 0; position <= dividend.length - width; position++) {
+        const before = work.slice(position, position + width).join('');
+        const quotientBit = before[0];
+        const operand = quotientBit === '1' ? divisor : '0'.repeat(width);
+        for (let offset = 0; offset < width; offset++) work[position + offset] ^= Number(operand[offset]);
+        const after = work.slice(position, position + width).join('');
+        const bringIndex = position + width;
+        const brought = bringIndex < dividend.length ? dividend[bringIndex] : null;
+        const next = after.slice(1) + (brought ?? '');
+        quotient += quotientBit;
+        steps.push({ position, before, operand, after, brought, bringIndex, next, quotientBit, snapshot: work.join('') });
+      }
+      return { dividend, divisor, steps, quotient, remainder: work.slice(-(width - 1)).join('') };
+    }
+    function encode(rawData, rawGenerator) {
+      const data = bits(rawData, 'Data bits', 64, 'data-input');
+      const g = generator(rawGenerator), degree = g.length - 1;
+      const padded = data + '0'.repeat(degree);
+      const division = divide(padded, g);
+      return { data, generator: g, degree, padded, division, crc: division.remainder, frame: data + division.remainder };
+    }
+    function check(rawFrame, rawGenerator) {
+      const g = generator(rawGenerator), frame = bits(rawFrame, 'Received frame', 80, 'received-frame');
+      if (frame.length < g.length) throw new Error('The received frame is shorter than the generator.');
+      const division = divide(frame, g);
+      return { frame, division, remainder: division.remainder, detected: /1/.test(division.remainder) };
+    }
+    function withFlips(frame, positions) {
+      if (!Array.isArray(positions) || positions.some(p => !Number.isInteger(p) || p < 0 || p >= frame.length) || new Set(positions).size !== positions.length) throw new Error('Choose distinct bit positions inside the frame.');
+      const output = frame.split('');
+      positions.forEach(position => { output[position] = output[position] === '1' ? '0' : '1'; });
+      return output.join('');
+    }
+    function undetectedFrame(frame, g) {
+      return withFlips(frame, Array.from(g, (bit, i) => bit === '1' ? frame.length - g.length + i : -1).filter(i => i >= 0));
+    }
+    return { bits, generator, divide, encode, check, withFlips, undetectedFrame };
+  })();
+  </script>
+  <script id="crc-ui">
+  (() => {
+    const $ = id => document.getElementById(id);
+    const esc = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    let example, received, receiver, mode = 'sender';
+    let position = { sender: 0, receiver: 0 }, complete = { sender: false, receiver: false };
+    const presets = { classic: ['1101011011','10011'], short: ['1011','1101'], zeros: ['0000','1011'] };
+    const currentDivision = () => mode === 'sender' ? example.division : receiver.division;
+    const changedPositions = () => Array.from(received, (bit, i) => bit !== example.frame[i] ? i : -1).filter(i => i >= 0);
+    function feedback(message = '', field = null) {
+      $('input-feedback').textContent = message;
+      $('input-feedback').hidden = !message;
+      $('input-feedback').classList.toggle('error', !!field);
+      ['data-input','generator-input'].forEach(id => $(id).setAttribute('aria-invalid', String(id === field)));
+    }
+    function calculate(data, generator) {
+      const next = CRC.encode(data, generator);
+      const nextCheck = CRC.check(next.frame, next.generator);
+      if (nextCheck.detected) throw new Error('The generated frame did not pass its CRC check.');
+      example = next; received = next.frame; receiver = nextCheck;
+      mode = 'sender'; position = { sender: 0, receiver: 0 }; complete = { sender: false, receiver: false };
+      $('data-input').value = next.data; $('generator-input').value = next.generator;
+      feedback(); renderOverview(); render();
+      $('division-scroll').scrollTop = 0; $('division-scroll').scrollLeft = 0;
+      return example;
+    }
+    function submit() {
+      try { calculate($('data-input').value, $('generator-input').value); }
+      catch (error) { feedback(error.message, error.field ?? 'data-input'); }
+    }
+    function renderOverview() {
+      $('data-summary').textContent = example.data;
+      $('data-length').textContent = example.data.length + (example.data.length === 1 ? ' data bit' : ' data bits');
+      $('padding-title').textContent = '2 · Append ' + example.degree + (example.degree === 1 ? ' zero' : ' zeros');
+      $('padded-summary').innerHTML = '<span class="data-color">' + example.data + '</span><span class="pad-color">' + '0'.repeat(example.degree) + '</span>';
+      $('padding-rule').textContent = 'Generator length − 1 = ' + example.generator.length + ' − 1 = ' + example.degree;
+      $('crc-summary').textContent = example.crc;
+      $('crc-length').textContent = example.degree + (example.degree === 1 ? ' check bit' : ' check bits') + ' · fixed width, including leading zeros';
+      $('generator-badge').textContent = example.generator;
+      $('sender-equation').innerHTML = 'Divide <code>' + example.padded + '</code> by <code>' + example.generator + '</code> using XOR.';
+      $('degree-note').textContent = 'Keep the last ' + example.degree + (example.degree === 1 ? ' bit' : ' bits') + ' as the CRC.';
+      const terms = Array.from(example.generator, (bit, i) => {
+        if (bit === '0') return null;
+        const degree = example.degree - i;
+        return degree === 0 ? '1' : degree === 1 ? 'x' : 'x<sup>' + degree + '</sup>';
+      }).filter(Boolean);
+      $('polynomial').innerHTML = 'G(x) = ' + terms.join(' + ');
+    }
+    function renderChannel() {
+      const changes = changedPositions(), missed = !receiver.detected && changes.length > 0;
+      $('received-bits').innerHTML = Array.from(received, (bit, index) => {
+        const crc = index >= example.data.length, flipped = bit !== example.frame[index];
+        const label = 'Bit ' + (index + 1) + ', ' + (crc ? 'CRC' : 'data') + ', received ' + bit + ', originally ' + example.frame[index] + (flipped ? ', changed' : ', unchanged') + '. Click to flip.';
+        return '<button type="button" class="bit-button' + (crc ? ' crc' : '') + (flipped ? ' flipped' : '') + '" data-bit="' + index + '" aria-pressed="' + flipped + '" aria-label="' + label + '"><span class="bit-value">' + bit + '</span><span class="bit-number" aria-hidden="true">' + (index + 1) + '</span></button>';
+      }).join('');
+      $('changed-count').textContent = changes.length + (changes.length === 1 ? ' bit changed' : ' bits changed');
+      $('restore-frame').disabled = changes.length === 0;
+      $('receiver-verdict').className = 'receiver-verdict' + (receiver.detected ? ' error' : missed ? ' missed' : '');
+      $('verdict-title').textContent = receiver.detected ? 'Error detected' : 'No error detected';
+      $('syndrome').textContent = receiver.remainder;
+      $('verdict-description').textContent = receiver.detected ? 'The remainder is not all zeros. The received frame fails this CRC check.' : 'The remainder is all zeros. The received frame passes this CRC check.';
+      $('simulation-note').textContent = missed ? 'Undetected error in this simulation: ' + changes.length + ' bits changed, but their error pattern is divisible by G. The receiver only sees its frame and cannot compare it with the original.' : changes.length ? 'Changed positions: ' + changes.map(i => i + 1).join(', ') + '. CRC detects the error here; it does not identify or repair the wrong bits.' : 'Divide the complete received frame below. The receiver does not append any extra zeros.';
+    }
+    function renderExplanation(step, index, total) {
+      $('explain-number').textContent = 'Step ' + (index + 1) + ' of ' + total;
+      $('explain-title').textContent = step.quotientBit === '1' ? 'Starts with 1 → use G' : 'Starts with 0 → use zeros';
+      const next = step.brought !== null ? '<p>Drop the leading zero, then bring down bit ' + (step.bringIndex + 1) + ': <span class="bring">' + step.brought + '</span>.</p><p class="muted">Next group</p><p class="large">' + step.after.slice(1) + '<span class="bring">' + step.brought + '</span></p>' : '<p>There are no more bits to bring down. Drop the leading zero and keep the last ' + example.degree + (example.degree === 1 ? ' bit' : ' bits') + '.</p><p class="muted">Final remainder</p><p class="large crc-color">' + step.next + '</p>';
+      $('step-explanation').innerHTML = '<div class="xor-block"><span class="muted">Group</span><span class="digits">' + step.before + '</span><span>XOR</span><span class="digits">' + step.operand + '</span><div class="xor-rule"></div><span class="muted">Result</span><span class="digits xor-answer">' + step.after + '</span></div><p>' + (step.quotientBit === '1' ? 'Write <b>1</b> in the quotient because the current group begins with 1.' : 'Write <b>0</b> in the quotient. XOR with zeros leaves this group unchanged.') + '</p>' + next + '<div class="mini-rule"><p><b>XOR:</b> equal bits give 0; different bits give 1.</p><div class="xor-truth"><span>0 ⊕ 0 = 0</span><span>0 ⊕ 1 = 1</span><span>1 ⊕ 0 = 1</span><span>1 ⊕ 1 = 0</span></div></div>';
+    }
+    function renderDivision(division, current) {
+      const cell = 26, m = division.divisor.length, n = division.dividend.length;
+      const start = m * cell + 61, end = start + (n - 1) * cell;
+      const count = complete[mode] ? division.steps.length : current + 1;
+      const width = Math.max(660, end + 186), height = 138 + count * 90;
+      const mono = 'ui-monospace, SFMono-Regular, Consolas, monospace';
+      const text = (x,y,value,fill = '#20324a',extra = '') => '<text x="' + x + '" y="' + y + '" fill="' + fill + '" font-family="' + mono + '" font-size="20" text-anchor="middle" ' + extra + '>' + esc(value) + '</text>';
+      const digits = (bits,x,y,fill,extra = '') => Array.from(bits, (bit,i) => text(x + i * cell,y,bit,typeof fill === 'function' ? fill(i) : fill,extra)).join('');
+      let svg = '<title id="svg-title">' + (mode === 'sender' ? 'Sender' : 'Receiver') + ' CRC long division</title><desc id="svg-description">Divide ' + division.dividend + ' by ' + division.divisor + ' using XOR. Step ' + (current + 1) + ' of ' + division.steps.length + ' is selected. The worked table below gives each operation as text.</desc>';
+      svg += '<text x="18" y="23" font-size="12" fill="#52647b">Generator G</text><text x="' + start + '" y="18" font-size="12" fill="#52647b">Quotient · not transmitted</text>';
+      const quotientShown = complete[mode] ? division.quotient : division.quotient.slice(0, current + 1) + '·'.repeat(division.steps.length - current - 1);
+      svg += digits(quotientShown, start + (m - 1) * cell, 43, '#52647b');
+      svg += '<path d="M ' + (start - 20) + ' 81 V 54 H ' + (end + 17) + '" fill="none" stroke="#52647b" stroke-width="1.5"/>';
+      svg += digits(division.divisor, 26, 79, '#2058c4', 'font-weight="650"');
+      svg += digits(division.dividend, start, 79, '#132641', 'font-weight="650"');
+      division.steps.slice(0,count).forEach((step,index) => {
+        const y = 118 + index * 90, x = start + step.position * cell, active = index === current;
+        const last = index === division.steps.length - 1;
+        svg += '<g data-diagram-step="' + index + '">';
+        if (active) svg += '<rect x="' + Math.max(4,x-32) + '" y="' + (y-24) + '" width="' + (width-Math.max(4,x-32)-7) + '" height="72" rx="6" fill="#edf4ff"/>';
+        svg += text(x - 23, y, '⊕', '#52647b');
+        svg += digits(step.operand, x, y, step.quotientBit === '1' ? '#2058c4' : '#6b7d93');
+        svg += '<line x1="' + (x-10) + '" x2="' + (x+(m-1)*cell+11) + '" y1="' + (y+9) + '" y2="' + (y+9) + '" stroke="#8195b0" stroke-width="1.4"/>';
+        if (last) svg += '<rect x="' + (x+cell-12) + '" y="' + (y+16) + '" width="' + ((m-1)*cell-1) + '" height="30" rx="5" fill="#caecdd"/>';
+        svg += digits(step.after, x, y+38, j => j === 0 ? '#8290a3' : last ? '#0b7160' : '#20324a', last ? 'font-weight="650"' : '');
+        if (step.brought !== null) {
+          svg += '<rect x="' + (x+m*cell-11) + '" y="' + (y+16) + '" width="22" height="29" rx="4" fill="#d8f2e8"/>';
+          svg += text(x+m*cell, y+38, step.brought, '#0b7160', 'font-weight="700"');
+        }
+        svg += '<text x="' + (end+31) + '" y="' + y + '" font-size="12" fill="' + (active ? '#2058c4' : '#64748b') + '">Step ' + (index+1) + '</text>';
+        svg += '<text x="' + (end+31) + '" y="' + (y+18) + '" font-size="12" fill="#64748b">' + (step.quotientBit === '1' ? 'XOR with G' : 'XOR with 0s') + '</text>';
+        if (last) svg += '<text x="' + (end+31) + '" y="' + (y+38) + '" font-size="12" fill="#0b7160" font-weight="650">Remainder</text>';
+        svg += '</g>';
+      });
+      if (count < division.steps.length) svg += '<text x="' + start + '" y="' + (height-18) + '" font-size="13" fill="#52647b">Next step: move one position to the right.</text>';
+      $('division-svg').setAttribute('viewBox','0 0 ' + width + ' ' + height);
+      $('division-svg').setAttribute('width',width);
+      $('division-svg').setAttribute('height',height);
+      $('division-svg').innerHTML = svg;
+    }
+    function renderTable(division, current) {
+      $('table-caption').textContent = (mode === 'sender' ? 'Sender' : 'Receiver') + ' division of ' + division.dividend + ' by ' + division.divisor + '.';
+      $('table-body').innerHTML = division.steps.map((step,index) => '<tr class="' + (current === index ? 'active' : '') + '"><td><button type="button" class="row-button" data-step="' + index + '" aria-label="Explain step ' + (index+1) + '"' + (current === index ? ' aria-current="step"' : '') + '>' + (index+1) + '</button></td><td><code>' + step.before + '</code></td><td><code>' + step.operand + '</code></td><td><code>' + step.after + '</code></td><td><code>' + (step.brought ?? '—') + '</code></td><td><code' + (step.brought === null ? ' class="crc-color"' : '') + '>' + (step.brought === null ? 'R = ' : '') + step.next + '</code></td></tr>').join('');
+    }
+    function renderResult(division) {
+      const sender = mode === 'sender', missed = !sender && !receiver.detected && changedPositions().length > 0;
+      $('result-box').className = 'result-box' + (!sender && receiver.detected ? ' error' : missed ? ' missed' : '');
+      $('result-size').textContent = sender ? example.frame.length + ' transmitted bits' : example.degree + '-bit remainder';
+      $('frame-labels').hidden = !sender;
+      if (sender) {
+        $('result-title').textContent = 'Transmit original data + CRC';
+        $('result-code').innerHTML = '<span class="frame-data">' + example.data + '</span><span class="frame-crc">' + example.crc + '</span>';
+        $('result-description').textContent = 'Replace the appended zeros with ' + example.crc + '. Send ' + example.frame + '. Switch to Receiver to check this frame or flip a bit.';
+      } else {
+        $('result-title').textContent = receiver.detected ? 'Receiver conclusion: error detected' : 'Receiver conclusion: no error detected';
+        $('result-code').textContent = division.remainder;
+        $('result-description').textContent = receiver.detected ? 'At least one remainder bit is 1, so this frame fails the CRC check. CRC alone does not tell the receiver how to repair it.' : missed ? 'This frame passes despite the changes made in the simulation. A zero remainder does not guarantee that the frame is unchanged.' : 'All remainder bits are 0. This frame passes the CRC check.';
+      }
+    }
+    function render() {
+      const division = currentDivision(), current = position[mode];
+      document.querySelectorAll('[data-mode]').forEach(tab => { const selected = tab.dataset.mode === mode; tab.setAttribute('aria-selected',String(selected)); tab.tabIndex = selected ? 0 : -1; });
+      $('lesson-panel').setAttribute('aria-labelledby',mode+'-tab');
+      $('lesson-title').textContent = mode === 'sender' ? 'Append zeros, then divide' : 'Check the received frame';
+      $('lesson-description').textContent = mode === 'sender' ? 'Follow the binary division below. Its remainder becomes the check bits added to your original data.' : 'Use the same generator to divide the entire received frame, including its CRC bits. Do not append more zeros.';
+      $('sender-setup').hidden = mode !== 'sender'; $('channel').hidden = mode !== 'receiver';
+      if (mode === 'receiver') renderChannel();
+      $('step-count').textContent = 'Step ' + (current+1) + ' of ' + division.steps.length;
+      $('previous').disabled = current === 0;
+      $('next').disabled = current === division.steps.length-1;
+      $('restart').disabled = current === 0 && !complete[mode];
+      $('show-all').disabled = complete[mode];
+      $('progress-fill').style.width = (current+1)/division.steps.length*100 + '%';
+      renderExplanation(division.steps[current],current,division.steps.length);
+      renderDivision(division,current); renderTable(division,current); renderResult(division);
+    }
+    function navigate(direction, step, showAll = false) {
+      if (!['sender','receiver'].includes(direction)) throw new Error('Choose sender or receiver.');
+      const division = direction === 'sender' ? example.division : receiver.division;
+      if (!Number.isInteger(step) || step < 0 || step >= division.steps.length) throw new Error('Choose a valid division step.');
+      mode = direction; position[mode] = step;
+      if (showAll) complete[mode] = true;
+      render();
+      const scroller = $('division-scroll'), activeTop = 94 + step * 90;
+      if (activeTop < scroller.scrollTop || activeTop + 80 > scroller.scrollTop + scroller.clientHeight) scroller.scrollTop = Math.max(0,activeTop-scroller.clientHeight+150);
+      return division.steps[step];
+    }
+    function setReceived(frame) {
+      if (typeof frame !== 'string' || frame.length !== example.frame.length || !/^[01]+$/.test(frame)) throw new Error('The received frame must keep the original frame length and contain only bits.');
+      const checked = CRC.check(frame,example.generator);
+      received = frame; receiver = checked; mode = 'receiver'; position.receiver = 0; complete.receiver = false;
+      render(); $('division-scroll').scrollTop = 0;
+      return checked;
+    }
+    $('crc-form').addEventListener('submit',event => { event.preventDefault(); submit(); });
+    ['data-input','generator-input'].forEach(id => $(id).addEventListener('input',() => feedback('Inputs changed. Click Calculate CRC to update the worked example.')));
+    document.querySelectorAll('[data-example]').forEach(button => button.addEventListener('click',() => calculate(...presets[button.dataset.example])));
+    document.querySelectorAll('[data-mode]').forEach(tab => {
+      tab.addEventListener('click',() => { navigate(tab.dataset.mode,position[tab.dataset.mode]); });
+      tab.addEventListener('keydown',event => {
+        if (!['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return;
+        event.preventDefault();
+        const target = event.key === 'Home' ? 'sender' : event.key === 'End' ? 'receiver' : mode === 'sender' ? 'receiver' : 'sender';
+        navigate(target,position[target]); $(target+'-tab').focus();
+      });
+    });
+    $('previous').addEventListener('click',() => navigate(mode,Math.max(0,position[mode]-1)));
+    $('next').addEventListener('click',() => navigate(mode,Math.min(currentDivision().steps.length-1,position[mode]+1)));
+    $('show-all').addEventListener('click',() => navigate(mode,currentDivision().steps.length-1,true));
+    $('restart').addEventListener('click',() => { complete[mode] = false; navigate(mode,0); $('division-scroll').scrollTop = 0; });
+    $('received-bits').addEventListener('click',event => {
+      const button = event.target.closest('button[data-bit]'); if (!button) return;
+      const index = Number(button.dataset.bit);
+      setReceived(CRC.withFlips(received,[index]));
+      $('received-bits').querySelector('[data-bit="'+index+'"]')?.focus({preventScroll:true});
+    });
+    $('one-error').addEventListener('click',() => setReceived(CRC.withFlips(example.frame,[0])));
+    $('missed-error').addEventListener('click',() => setReceived(CRC.undetectedFrame(example.frame,example.generator)));
+    $('restore-frame').addEventListener('click',() => setReceived(example.frame));
+    $('table-body').addEventListener('click',event => {
+      const button = event.target.closest('button[data-step]'); if (!button) return;
+      const index = Number(button.dataset.step); navigate(mode,index);
+      $('table-body').querySelector('[data-step="'+index+'"]')?.focus({preventScroll:true});
+    });
+    $('download-app').addEventListener('click',() => {
+      const clone = document.documentElement.cloneNode(true);
+      clone.querySelector('#data-input').setAttribute('value',$('data-input').value);
+      clone.querySelector('#generator-input').setAttribute('value',$('generator-input').value);
+      const url = URL.createObjectURL(new Blob(['<!doctype html>\n',clone.outerHTML],{type:'text/html;charset=utf-8'}));
+      const link = document.createElement('a'); link.href = url; link.download = 'crc.html';
+      document.body.appendChild(link); link.click(); link.remove();
+      setTimeout(() => URL.revokeObjectURL(url),30000);
+    });
+    submit();
+    if (!example) calculate(...presets.classic);
+    if (document.modelContext?.registerTool) {
+      const lifecycle = new AbortController();
+      const registrations = [
+        {name:'calculate_crc',title:'Calculate CRC',description:'Create a sender and receiver example for data bits and a binary generator, and show the first sender division step.',inputSchema:{type:'object',properties:{data:{type:'string'},generator:{type:'string'}},required:['data','generator'],additionalProperties:false},annotations:{readOnlyHint:false,untrustedContentHint:false},execute(input){
+          if (!input || typeof input.data !== 'string' || typeof input.generator !== 'string') throw new Error('Supply data and generator strings.');
+          const result = calculate(input.data,input.generator);
+          return {data:result.data,generator:result.generator,padded:result.padded,remainder:result.crc,transmittedFrame:result.frame,steps:result.division.steps.length};
+        }},
+        {name:'set_crc_errors',title:'Set changed bits',description:'Replace the simulated channel errors with the specified one-based bit positions, relative to the original transmitted frame, and show the receiver.',inputSchema:{type:'object',properties:{positions:{type:'array',items:{type:'integer',minimum:1},uniqueItems:true}},required:['positions'],additionalProperties:false},annotations:{readOnlyHint:false,untrustedContentHint:false},execute(input){
+          if (!input || !Array.isArray(input.positions)) throw new Error('Supply an array of bit positions.');
+          const frame = CRC.withFlips(example.frame,input.positions.map(p => typeof p === 'number' ? p-1 : NaN));
+          const result = setReceived(frame);
+          return {receivedFrame:frame,remainder:result.remainder,errorDetected:result.detected,changedBits:changedPositions().length};
+        }},
+        {name:'show_crc_step',title:'Explain a CRC division step',description:'Select a one-based sender or receiver division step and show its XOR operation. Optionally reveal the complete long division.',inputSchema:{type:'object',properties:{direction:{type:'string',enum:['sender','receiver']},step:{type:'integer',minimum:1},showFullDivision:{type:'boolean'}},required:['direction','step'],additionalProperties:false},annotations:{readOnlyHint:false,untrustedContentHint:false},execute(input){
+          if (!input || !Number.isInteger(input.step) || (input.showFullDivision !== undefined && typeof input.showFullDivision !== 'boolean')) throw new Error('Supply a valid step and direction.');
+          const row = navigate(input.direction,input.step-1,input.showFullDivision ?? false);
+          return {direction:mode,step:input.step,before:row.before,xorWith:row.operand,result:row.after,bringDown:row.brought,next:row.next};
+        }}
+      ];
+      for (const tool of registrations) { try { Promise.resolve(document.modelContext.registerTool(tool,{signal:lifecycle.signal})).catch(error => console.warn('CRC assistant tools unavailable.',error)); } catch (error) { console.warn('CRC assistant tools unavailable.',error); } }
+      window.addEventListener('pagehide',event => { if (!event.persisted) lifecycle.abort(); });
+    }
+  })();
+  </script>
+</body>
+</html>

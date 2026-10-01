@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Image Digitization Visualizer</title>
+  <style>
+    :root{
+      --bg:#f7f8fa; --panel:#ffffff; --card:#f0f2f5; --text:#111827;
+      --muted:#6b7280; --border:#d1d5db; --accent:#2563eb; --accent-bg:#dbeafe;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+    .wrap{max-width:1180px;margin:0 auto;padding:24px}
+    .grid{display:grid;gap:16px}
+    .g2{grid-template-columns:1fr 1fr}
+    .g-main{grid-template-columns:280px 1fr}
+    .panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px}
+    .card{background:var(--card);border-radius:12px;padding:14px}
+    h1,h2,h3,p{margin-top:0}
+    h1{font-size:28px;margin-bottom:8px}
+    h2{font-size:20px}
+    h3{font-size:16px}
+    .muted{color:var(--muted);font-size:14px}
+    .small{font-size:12px}
+    .label{font-weight:700;font-size:14px;display:block;margin-bottom:8px}
+    input[type=file], select{width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;background:white;font-size:16px}
+    input[type=range]{width:100%}
+    button{padding:10px 14px;border:1px solid var(--border);border-radius:10px;background:white;cursor:pointer;font-weight:600}
+    button:hover{background:var(--card)}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .between{justify-content:space-between}
+    .step{padding:8px 12px;border-radius:999px;background:var(--card);font-size:14px;font-weight:600}
+    canvas{width:100%;border:1px solid var(--border);border-radius:12px;display:block;background:#ddd}
+    #sourceCanvas{aspect-ratio:3/2}
+    #pixelCanvas{aspect-ratio:1/1}
+    .inspector-values{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    .valuebox{border:1px solid var(--border);border-radius:12px;padding:12px}
+    .big{font-size:20px;font-weight:700}
+    .swatch{width:48px;height:48px;border-radius:12px;border:1px solid var(--border)}
+    .scroll{overflow:auto;border:1px solid var(--border);border-radius:12px}
+    table{border-collapse:collapse;width:100%;font-family:monospace;font-size:12px;text-align:center}
+    td{border:1px solid var(--border);padding:7px}
+    td.sel{background:var(--accent-bg);font-weight:700}
+    code{font-family:monospace;word-break:break-all}
+    .binary-item{border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px}
+    @media (max-width:800px){
+      .g2,.g-main{grid-template-columns:1fr}
+      .inspector-values{grid-template-columns:1fr}
+      .wrap{padding:12px}
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <section class="panel">
+    <div class="row between">
+      <div>
+        <div class="small muted">Image digitization</div>
+        <h1>How does an image become numbers?</h1>
+        <p class="muted">Image → sampling → pixels → quantization → decimal values → binary data.</p>
+      </div>
+      <button id="resetBtn">Reset demo</button>
+    </div>
+  </section>
+
+  <div style="height:14px"></div>
+
+  <section class="panel">
+    <div class="row">
+      <span class="step">1. Image</span><span>→</span>
+      <span class="step">2. Sampling</span><span>→</span>
+      <span class="step">3. Pixels</span><span>→</span>
+      <span class="step">4. Quantization</span><span>→</span>
+      <span class="step">5. Numbers</span><span>→</span>
+      <span class="step">6. Binary</span>
+    </div>
+  </section>
+
+  <div style="height:14px"></div>
+
+  <section class="grid g-main">
+    <aside class="panel">
+      <label class="label">Choose an image</label>
+      <input id="fileInput" type="file" accept="image/*" />
+      <p class="small muted">The built-in demo works immediately.</p>
+
+      <div style="height:12px"></div>
+      <label class="label">Pixel representation</label>
+      <select id="modeSelect">
+        <option value="gray">Grayscale</option>
+        <option value="rgb">RGB color</option>
+      </select>
+
+      <div style="height:16px"></div>
+      <div class="row between">
+        <label class="label" style="margin:0">Sampling resolution</label>
+        <span id="gridLabel" class="muted">8 × 8</span>
+      </div>
+      <input id="gridRange" type="range" min="4" max="16" step="1" value="8" />
+      <p class="small muted">Fewer samples = larger pixels and less spatial detail.</p>
+
+      <div style="height:12px"></div>
+      <div class="row between">
+        <label class="label" style="margin:0">Bit depth</label>
+        <span id="bitsLabel" class="muted">8 bits</span>
+      </div>
+      <input id="bitsRange" type="range" min="1" max="8" step="1" value="8" />
+      <p id="levelsLabel" class="small muted">2⁸ = 256 intensity levels</p>
+
+      <div class="card">
+        
+        <p class="muted" style="margin-top:8px;margin-bottom:0">Sampler</p>
+      </div>
+    </aside>
+
+    <div>
+      <div class="grid g2">
+        <article class="panel">
+          <div class="small muted">STEP 1</div>
+          <h2>Original image</h2>
+          <canvas id="sourceCanvas" width="420" height="280"></canvas>
+          <p class="muted" style="margin-top:12px">A real scene contains continuous variations of light. The sensor converts them into discrete measurements.</p>
+        </article>
+
+        <article class="panel">
+          <div class="row between">
+            <div><div class="small muted">STEPS 2–3</div><h2>Sampling into pixels</h2></div>
+            <span id="sampleCount" class="small muted">64 samples</span>
+          </div>
+          <canvas id="pixelCanvas" width="420" height="420"></canvas>
+          <p class="muted" style="margin-top:12px">The image is divided into a grid. Each cell becomes one pixel. Click a pixel to inspect its value.</p>
+        </article>
+      </div>
+
+      <div style="height:14px"></div>
+
+      <section class="card">
+        <div class="row between">
+          <div>
+            <div class="small muted">SELECTED PIXEL</div>
+            <h3 id="pixelPosition">Row 4, Column 4</h3>
+          </div>
+          <div id="pixelSwatch" class="swatch"></div>
+        </div>
+        <div id="pixelValues" class="inspector-values"></div>
+      </section>
+    </div>
+  </section>
+
+  <div style="height:14px"></div>
+
+  <section class="grid g2">
+    <article class="panel">
+      <div class="small muted">STEPS 4–5</div>
+      <h2>Image becomes a matrix of numbers</h2>
+      <div id="matrixCaption" class="small muted">8 × 8 grayscale matrix</div>
+      <div class="scroll" style="margin-top:12px">
+        <table id="matrixTable"></table>
+      </div>
+      <p class="muted" style="margin-top:12px">For grayscale, one number represents each pixel. At 8 bits: 0 = black, 255 = white.</p>
+    </article>
+
+    <article class="panel">
+      <div class="small muted">STEP 6</div>
+      <h2>The numbers are stored as binary</h2>
+      <div id="binaryExamples"></div>
+      <div class="card">
+        <b>Example</b>
+        <p><code>Intensity 200 → 11001000</code></p>
+        <p class="small muted">Computers store bits in memory rather than “a picture” in the human sense.</p>
+      </div>
+    </article>
+  </section>
+
+  <div style="height:14px"></div>
+
+
+</div>
+
+<script>
+const sourceCanvas = document.getElementById('sourceCanvas');
+const pixelCanvas = document.getElementById('pixelCanvas');
+const sctx = sourceCanvas.getContext('2d',{willReadFrequently:true});
+const pctx = pixelCanvas.getContext('2d');
+const fileInput = document.getElementById('fileInput');
+const modeSelect = document.getElementById('modeSelect');
+const gridRange = document.getElementById('gridRange');
+const bitsRange = document.getElementById('bitsRange');
+const gridLabel = document.getElementById('gridLabel');
+const bitsLabel = document.getElementById('bitsLabel');
+const levelsLabel = document.getElementById('levelsLabel');
+const sampleCount = document.getElementById('sampleCount');
+const matrixTable = document.getElementById('matrixTable');
+const matrixCaption = document.getElementById('matrixCaption');
+const pixelPosition = document.getElementById('pixelPosition');
+const pixelSwatch = document.getElementById('pixelSwatch');
+const pixelValues = document.getElementById('pixelValues');
+const binaryExamples = document.getElementById('binaryExamples');
+const resetBtn = document.getElementById('resetBtn');
+
+let grid=8,bits=8,mode='gray',selected={r:3,c:3},matrix=[];
+
+function drawDemo(){
+  const w=sourceCanvas.width,h=sourceCanvas.height;
+  const g=sctx.createLinearGradient(0,0,w,h);
+  g.addColorStop(0,'rgb(28,55,105)');
+  g.addColorStop(.38,'rgb(76,145,188)');
+  g.addColorStop(.68,'rgb(229,172,94)');
+  g.addColorStop(1,'rgb(91,42,51)');
+  sctx.fillStyle=g;sctx.fillRect(0,0,w,h);
+  sctx.fillStyle='rgba(255,255,255,.82)';
+  sctx.beginPath();sctx.arc(315,70,34,0,Math.PI*2);sctx.fill();
+  sctx.fillStyle='rgba(20,28,35,.7)';
+  sctx.beginPath();sctx.moveTo(0,220);sctx.lineTo(95,132);sctx.lineTo(185,215);sctx.lineTo(275,112);sctx.lineTo(420,225);sctx.lineTo(420,280);sctx.lineTo(0,280);sctx.closePath();sctx.fill();
+  sctx.fillStyle='rgba(8,15,20,.82)';
+  sctx.beginPath();sctx.moveTo(0,242);sctx.lineTo(125,183);sctx.lineTo(210,250);sctx.lineTo(326,181);sctx.lineTo(420,246);sctx.lineTo(420,280);sctx.lineTo(0,280);sctx.closePath();sctx.fill();
+  updateAll();
+}
+
+function quant(v){
+  const levels=Math.pow(2,bits);
+  const idx=Math.round((v/255)*(levels-1));
+  return Math.round(idx*255/(levels-1||1));
+}
+function storedLevel(v){
+  const levels=Math.pow(2,bits);
+  return Math.round((v/255)*(levels-1));
+}
+function sampleImage(){
+  matrix=[];
+  const sw=sourceCanvas.width,sh=sourceCanvas.height;
+  for(let r=0;r<grid;r++){
+    const row=[];
+    for(let c=0;c<grid;c++){
+      const x=Math.min(sw-1,Math.floor((c+.5)*sw/grid));
+      const y=Math.min(sh-1,Math.floor((r+.5)*sh/grid));
+      const d=sctx.getImageData(x,y,1,1).data;
+      const qr=quant(d[0]),qg=quant(d[1]),qb=quant(d[2]);
+      const grayRaw=Math.round(.299*d[0]+.587*d[1]+.114*d[2]);
+      row.push({r:qr,g:qg,b:qb,gray:quant(grayRaw)});
+    }
+    matrix.push(row);
+  }
+}
+function drawPixels(){
+  const W=pixelCanvas.width,cell=W/grid;
+  pctx.clearRect(0,0,W,W);
+  matrix.forEach((row,r)=>row.forEach((v,c)=>{
+    pctx.fillStyle=mode==='gray'?`rgb(${v.gray},${v.gray},${v.gray})`:`rgb(${v.r},${v.g},${v.b})`;
+    pctx.fillRect(c*cell,r*cell,cell,cell);
+    pctx.strokeStyle='rgba(255,255,255,.35)';pctx.lineWidth=1;pctx.strokeRect(c*cell,r*cell,cell,cell);
+  }));
+  if(selected.r<grid&&selected.c<grid){
+    pctx.strokeStyle='white';pctx.lineWidth=Math.max(3,Math.min(7,18/grid));
+    pctx.strokeRect(selected.c*cell+2,selected.r*cell+2,cell-4,cell-4);
+    pctx.strokeStyle='black';pctx.lineWidth=1;
+    pctx.strokeRect(selected.c*cell+1,selected.r*cell+1,cell-2,cell-2);
+  }
+}
+function renderInspector(){
+  selected.r=Math.min(selected.r,grid-1);selected.c=Math.min(selected.c,grid-1);
+  const v=matrix[selected.r][selected.c];
+  pixelPosition.textContent=`Row ${selected.r+1}, Column ${selected.c+1}`;
+  pixelSwatch.style.background=mode==='gray'?`rgb(${v.gray},${v.gray},${v.gray})`:`rgb(${v.r},${v.g},${v.b})`;
+  if(mode==='gray'){
+    const level=storedLevel(v.gray);
+    pixelValues.innerHTML=`
+      <div class="valuebox"><div class="small muted">Displayed intensity</div><div class="big">${v.gray}</div></div>
+      <div class="valuebox"><div class="small muted">Quantized level</div><div class="big">${level}</div></div>
+      <div class="valuebox"><div class="small muted">Binary (${bits}-bit)</div><div class="big"><code>${level.toString(2).padStart(bits,'0')}</code></div></div>`;
+  }else{
+    pixelValues.innerHTML=[['Red',v.r],['Green',v.g],['Blue',v.b]].map(([name,val])=>{
+      const level=storedLevel(val);
+      return `<div class="valuebox"><div class="small muted">${name} channel</div><div class="big">${val}</div><code>${level.toString(2).padStart(bits,'0')}</code></div>`;
+    }).join('');
+  }
+}
+function renderMatrix(){
+  const show=Math.min(grid,10);
+  let html='<tbody>';
+  for(let r=0;r<show;r++){
+    html+='<tr>';
+    for(let c=0;c<show;c++){
+      const v=matrix[r][c];
+      const text=mode==='gray'?storedLevel(v.gray):`${storedLevel(v.r)},${storedLevel(v.g)},${storedLevel(v.b)}`;
+      html+=`<td class="${selected.r===r&&selected.c===c?'sel':''}">${text}</td>`;
+    }
+    html+='</tr>';
+  }
+  html+='</tbody>';
+  matrixTable.innerHTML=html;
+  matrixCaption.textContent=mode==='gray'?`${grid} × ${grid} grayscale matrix`:`${grid} × ${grid} RGB matrix (R,G,B)`;
+}
+function renderBinaryExamples(){
+  const coords=[[0,0],[Math.floor(grid/2),Math.floor(grid/2)],[grid-1,grid-1]];
+  binaryExamples.innerHTML=coords.map(([r,c])=>{
+    const v=matrix[r][c];
+    if(mode==='gray'){
+      const n=storedLevel(v.gray),bin=n.toString(2).padStart(bits,'0');
+      return `<div class="binary-item">Pixel (${r+1}, ${c+1}) → level <b>${n}</b> → <code>${bin}</code></div>`;
+    }
+    const vals=[v.r,v.g,v.b].map(storedLevel),bins=vals.map(n=>n.toString(2).padStart(bits,'0'));
+    return `<div class="binary-item">Pixel (${r+1}, ${c+1}) → RGB <b>(${vals.join(', ')})</b><br><code>${bins.join('  ')}</code></div>`;
+  }).join('');
+}
+function updateLabels(){
+  gridLabel.textContent=`${grid} × ${grid}`;
+  bitsLabel.textContent=`${bits} bit${bits===1?'':'s'}`;
+  levelsLabel.textContent=`2^${bits} = ${Math.pow(2,bits)} ${mode==='gray'?'intensity':'levels per channel'}`;
+  sampleCount.textContent=`${grid*grid} samples`;
+}
+function updateAll(){
+  sampleImage();drawPixels();updateLabels();renderInspector();renderMatrix();renderBinaryExamples();
+}
+function loadImage(file){
+  if(!file||!file.type.startsWith('image/'))return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    const img=new Image();
+    img.onload=()=>{
+      sctx.clearRect(0,0,sourceCanvas.width,sourceCanvas.height);
+      const scale=Math.max(sourceCanvas.width/img.width,sourceCanvas.height/img.height);
+      const w=img.width*scale,h=img.height*scale;
+      const x=(sourceCanvas.width-w)/2,y=(sourceCanvas.height-h)/2;
+      sctx.drawImage(img,x,y,w,h);updateAll();
+    };
+    img.src=reader.result;
+  };
+  reader.readAsDataURL(file);
+}
+pixelCanvas.addEventListener('click',e=>{
+  const rect=pixelCanvas.getBoundingClientRect();
+  selected.c=Math.max(0,Math.min(grid-1,Math.floor((e.clientX-rect.left)/rect.width*grid)));
+  selected.r=Math.max(0,Math.min(grid-1,Math.floor((e.clientY-rect.top)/rect.height*grid)));
+  drawPixels();renderInspector();renderMatrix();
+});
+gridRange.addEventListener('input',()=>{grid=Number(gridRange.value);selected={r:Math.floor(grid/2),c:Math.floor(grid/2)};updateAll();});
+bitsRange.addEventListener('input',()=>{bits=Number(bitsRange.value);updateAll();});
+modeSelect.addEventListener('change',()=>{mode=modeSelect.value;updateAll();});
+fileInput.addEventListener('change',()=>loadImage(fileInput.files&&fileInput.files[0]));
+resetBtn.addEventListener('click',()=>{
+  grid=8;bits=8;mode='gray';selected={r:3,c:3};
+  gridRange.value='8';bitsRange.value='8';modeSelect.value='gray';fileInput.value='';drawDemo();
+});
+drawDemo();
+</script>
+</body>
+</html>

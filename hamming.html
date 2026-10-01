@@ -1,0 +1,754 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hamming Code</title>
+<style>
+:root{--ink:#183c35;--muted:#5d726c;--line:#d8e4de;--brand:#186b56;--paper:#fff;--bg:#f3f6f1}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:1140px;margin:auto;padding:28px 20px 50px}
+header{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:24px}
+h1{font-size:clamp(28px,5vw,42px);line-height:1.15;margin:4px 0 10px;letter-spacing:-1.4px}
+h2{font-size:23px;line-height:1.3;margin:4px 0 16px}
+h3{font-size:18px;margin:0 0 10px}
+p{margin:10px 0}
+.eyebrow{font-size:12px;font-weight:750;letter-spacing:1.5px;text-transform:uppercase}
+.muted,small{color:var(--muted)}
+.badge{font-size:13px;padding:6px 12px;border-radius:20px;background:#e6eee5;white-space:nowrap}
+.panel{padding:25px;background:var(--paper);border:1px solid var(--line);border-radius:18px;margin:18px 0;box-shadow:0 4px 18px #203e3310}
+button,input,select{font:inherit}
+button{cursor:pointer;min-height:44px;border:1px solid var(--line);border-radius:9px;padding:9px 16px;background:white;color:var(--ink);font-weight:650}
+button:hover{border-color:var(--brand);background:#eef6f0}
+button:disabled{opacity:.4;cursor:default}
+button.primary,nav button[aria-pressed=true]{background:var(--brand);border-color:var(--brand);color:white}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid #348dbe;outline-offset:3px}
+input[type=text],select{width:100%;min-height:46px;border:1px solid #b5c9bd;background:white;border-radius:9px;padding:10px;color:var(--ink)}
+input[type=text]{font-family:ui-monospace,Consolas,monospace;letter-spacing:2px}
+input[type=checkbox]{width:18px;height:18px;accent-color:var(--brand)}
+label{font-weight:650}
+.settings{display:grid;grid-template-columns:2fr 1fr auto;gap:18px;align-items:end}
+.field label{display:block;margin-bottom:6px}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.spread{justify-content:space-between}
+.check{display:flex;align-items:center;gap:9px;margin-top:16px;font-size:14px}
+nav{display:flex;gap:10px;margin:24px 0 8px}
+nav button{flex:1}
+progress{width:100%;height:8px;accent-color:var(--brand);margin:14px 0}
+.formula,code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+.formula{padding:14px 16px;background:#edf5ed;border:1px solid #d7e8d8;border-radius:10px;overflow-wrap:anywhere;font-size:20px;line-height:1.7}
+.wrap{overflow-wrap:anywhere}
+code{font-size:.95em}
+.bits{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0}
+.bit{width:61px;min-height:94px;flex:0 0 61px;border:1px solid transparent;border-radius:11px;padding:6px;text-align:center;display:flex;flex-direction:column;justify-content:center;gap:2px}
+.bit small{font-size:11px;color:inherit}
+.bit b{font:750 27px/1.2 ui-monospace,Consolas,monospace}
+.bit.parity{background:#eee9fc;color:#5f3e94}
+.bit.data{background:#e8f1f8;color:#245b82}
+.bit.covered{box-shadow:inset 0 0 0 2px var(--brand)}
+.bit.changed{background:#ffe8dc;color:#a52f25;border-color:#d27054}
+.bit.fixed{background:#ddf4dc;color:#236829;box-shadow:inset 0 0 0 2px #4e9441}
+.legend{font-size:13px;color:var(--muted);display:flex;gap:18px;flex-wrap:wrap}
+.dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px}
+.scroll{overflow:auto;max-width:100%;margin:14px 0}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:11px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);background:#f6f9f4;font-size:12px;white-space:nowrap}
+td code{white-space:nowrap}
+#positionMap td{text-align:center;min-width:64px}
+.activeRow{background:#edf5ec}
+.tiny{padding:3px 10px;min-height:36px}
+.pass{color:#286b35;font-weight:700}
+.fail{color:#ae3526;font-weight:700}
+details{border-top:1px solid var(--line);margin-top:20px;padding-top:16px}
+summary{cursor:pointer;font-weight:700}
+.notice{padding:16px 18px;background:#f1f5ed;border:1px solid var(--line);border-radius:12px}
+.notice p{margin-bottom:0}
+.info{background:#edf4fb}
+.good{background:#ebf7e9}
+.warning{background:#fff3de}
+.resultRow{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin:20px 0}
+.syndromeBits{display:flex;gap:8px;flex-wrap:wrap}
+.syndromeBits div{background:#edf5ed;border-radius:9px;min-width:48px;text-align:center;padding:7px}
+.syndromeBits small,.syndromeBits b{display:block}
+.syndromeBits b{font-size:25px}
+#decoded{font-size:25px;font-weight:750;letter-spacing:3px}
+footer{color:var(--muted);font-size:13px;margin-top:25px}
+a{color:var(--brand)}
+@media(max-width:700px){
+ main{padding:20px 12px}
+ .panel{padding:18px}
+ .settings,.resultRow{grid-template-columns:1fr}
+ header{align-items:flex-start;flex-direction:column}
+ h2{font-size:21px}
+ .bit{width:52px;flex-basis:52px}
+ .badge{white-space:normal}
+}
+</style>
+</head>
+<body>
+<main>
+<header>
+ <div>
+  <div class="eyebrow">CSE 4295</div>
+  <h1>Hamming Code</h1>
+  <p class="muted">Sender and Receiver Calculation</p>
+ </div>
+</header>
+
+<section class="panel">
+ <form id="settings">
+  <div class="settings">
+   <div class="field">
+    <label for="dataInput">Data bits</label>
+    <input id="dataInput" type="text" value="1011" maxlength="128"
+     inputmode="numeric" autocomplete="off" spellcheck="false"
+     aria-describedby="inputHelp">
+   </div>
+   <div class="field">
+    <label for="parityMode">Group parity</label>
+    <select id="parityMode">
+     <option value="even">Even parity</option>
+     <option value="odd">Odd parity</option>
+    </select>
+   </div>
+   <button class="primary" type="submit">Build example →</button>
+  </div>
+  <p id="inputHelp" class="muted">
+   Enter 1–32 bits.  Choose Even Parity.
+  </p>
+  <label class="check">
+   <input id="extended" type="checkbox">
+   Add P0 for extended Hamming (SECDED)
+  </label>
+  <p class="muted">
+   Start with basic Hamming. Dont tick this SECDED box. Enable P0 later to demonstrate two-bit error detection.
+  </p>
+  <div class="row">
+   <button id="smallExample" type="button">4-bit example</button>
+   <button id="largeExample" type="button">12-bit example</button>
+  </div>
+  <p id="formMessage" role="status"></p>
+ </form>
+</section>
+
+<nav aria-label="Lab views">
+ <button id="senderTab" type="button" aria-pressed="true"
+  aria-controls="sender">1 · Sender</button>
+ <button id="receiverTab" type="button" aria-pressed="false"
+  aria-controls="receiver">2 · Receiver</button>
+</nav>
+
+<section id="sender" class="panel">
+ <div class="row spread">
+  <div>
+   <span class="eyebrow" id="stepNumber"></span>
+   <h2 id="stepTitle"></h2>
+  </div>
+  <span id="sizeBadge" class="badge"></span>
+ </div>
+ <progress id="progress" value="0" max="1"
+  aria-label="Sender lesson progress"></progress>
+ <div class="row">
+  <button id="previous" type="button">← Previous</button>
+  <button id="next" class="primary" type="button">Next step →</button>
+  <button id="restart" type="button">Restart steps</button>
+  <button id="finish" type="button">Full solution</button>
+ </div>
+ <div id="stepContent" aria-live="polite"></div>
+ <div id="senderBits" class="bits" aria-label="Codeword positions"></div>
+ <div class="legend">
+  <span><i class="dot" style="background:#b59ddd"></i>Parity bit</span>
+  <span><i class="dot" style="background:#78aaca"></i>Data bit</span>
+  <span>Green outline = current check group</span>
+ </div>
+ <details>
+  <summary>View the binary position map</summary>
+  <p>
+   A position belongs to P1, P2, P4, etc. when its binary position has a 1
+   at that weight. For example, 5 = 101₂ belongs to P1 and P4.
+  </p>
+  <div id="positionMap" class="scroll"></div>
+ </details>
+ <details id="solution">
+  <summary>Complete solution</summary>
+  <div id="worked"></div>
+ </details>
+</section>
+
+<section id="receiver" class="panel" hidden>
+ <div class="eyebrow">Find and correct an error</div>
+ <h2>What arrived at the receiver?</h2>
+ <p>
+  Click a bit to flip 0 ↔ 1. Click it again to restore it.
+  Data bits and parity bits can both be corrupted.
+ </p>
+ <div class="row">
+  <button id="oneError" type="button">One-bit error</button>
+  <button id="twoErrors" type="button">Two-bit error</button>
+  <button id="restore" type="button">Restore original</button>
+ </div>
+ <div id="receivedBits" class="bits" aria-label="Clickable received bits"></div>
+ <p>Received word: <code id="receivedWord" class="wrap"></code></p>
+ <p id="simulation" class="muted"></p>
+ <div class="notice">
+  <b>What this decoder can guarantee</b>
+  <p id="limit"></p>
+ </div>
+ <h3 style="margin-top:25px">Recheck every parity group</h3>
+ <p>
+  The receiver uses the same positions and parity rule as the sender.
+  Pass gives syndrome bit 0; fail gives 1.
+ </p>
+ <div class="row spread">
+  <p id="checkFocus" class="muted"></p>
+  <button id="nextCheck" type="button">Highlight next group →</button>
+ </div>
+ <div class="scroll">
+  <table>
+   <thead>
+    <tr>
+     <th>Check</th><th>Positions</th><th>Received bits (XOR)</th>
+     <th>Observed parity</th><th>Result</th><th>Syndrome bit</th>
+    </tr>
+   </thead>
+   <tbody id="checkRows"></tbody>
+  </table>
+ </div>
+ <p id="overallCheck" class="notice" hidden></p>
+ <div class="resultRow">
+  <div>
+   <h3>Combine the syndrome bits</h3>
+   <div id="syndrome"></div>
+  </div>
+  <div>
+   <h3>Receiver decision</h3>
+   <div id="diagnosis" aria-live="polite"></div>
+   <button id="correct" class="primary" type="button"
+    style="margin-top:16px">Apply indicated correction</button>
+  </div>
+ </div>
+ <div id="correction" class="notice" hidden>
+  <h3>After decoding</h3>
+  <p id="correctionNote"></p>
+  <div id="correctedBits" class="bits"></div>
+  <p>Extracted data:</p>
+  <div id="decoded" class="wrap"></div>
+  <p id="verification"></p>
+ </div>
+</section>
+
+<footer> <span>Developed by <a href="https://f-farhan.github.io/">Faisal Farhan</a> for CSE 4295 Course,AUST.     </span><span>Designed and developed with assistance from Claude and ChatGPT.</span>  </footer>
+</main>
+
+<script>
+const Hamming = (() => {
+ const isParity = p => p > 0 && (p & (p - 1)) === 0;
+ const xor = values => values.reduce((a, b) => a ^ b, 0);
+
+ function encode(raw, mode = 'even', extended = false) {
+  const data = String(raw).replace(/\s/g, '');
+  if (!/^[01]{1,32}$/.test(data))
+   throw new Error('Enter 1–32 binary digits (0 or 1). Spaces are ignored.');
+  if (!['even', 'odd'].includes(mode))
+   throw new Error('Choose even or odd parity.');
+
+  const target = mode === 'odd' ? 1 : 0;
+  let r = 1;
+  while (2 ** r < data.length + r + 1) r++;
+
+  const n = data.length + r;
+  const word = Array(n + 1).fill(0);
+  const parity = [];
+  let j = 0;
+
+  for (let p = 1; p <= n; p++) {
+   if (isParity(p)) parity.push(p);
+   else word[p] = Number(data[j++]);
+  }
+
+  const groups = parity.map(p => {
+   const positions = Array.from({length:n}, (_, i) => i + 1)
+    .filter(i => (i & p) !== 0);
+   const inputs = positions.filter(i => i !== p);
+   const values = inputs.map(i => word[i]);
+   const value = xor(values) ^ target;
+   word[p] = value;
+   return {p, positions, inputs, values, value};
+  });
+
+  const overall = xor(word.slice(1));
+  if (extended) word.push(overall);
+  return {data, mode, extended, target, r, n, word, groups, overall};
+ }
+
+ function inspect(e, received) {
+  if (received.length !== e.word.length ||
+      received.slice(1).some(v => v !== 0 && v !== 1))
+   throw new Error('The received word must have the expected length and contain bits only.');
+
+  const checks = e.groups.map(g => {
+   const values = g.positions.map(p => received[p]);
+   return {...g, values, observed:xor(values),
+    failed:xor(values) ^ e.target};
+  });
+
+  const syndrome = checks.reduce((s, g) => s + g.p * g.failed, 0);
+  const overallFailed = xor(received.slice(1));
+  let kind = 'clear', position = 0;
+
+  if (e.extended) {
+   if (syndrome && !overallFailed) kind = 'double';
+   else if (overallFailed) {
+    position = syndrome || e.n + 1;
+    kind = syndrome > e.n ? 'invalid' : 'single';
+   }
+  } else if (syndrome) {
+   position = syndrome;
+   kind = syndrome > e.n ? 'invalid' : 'single';
+  }
+
+  if (kind !== 'single') position = 0;
+  const candidate = received.slice();
+  if (position) candidate[position] ^= 1;
+
+  const data = candidate.slice(1, e.n + 1)
+   .filter((_, i) => !isParity(i + 1)).join('');
+
+  return {checks, syndrome, overallFailed, kind, position, candidate, data};
+ }
+
+ return {isParity, xor, encode, inspect};
+})();
+
+(function startHammingLab(){
+ 'use strict';
+ const $ = id => document.getElementById(id);
+ let e, received, stage = 0, selectedCheck = 1;
+ let showCandidate = false, labels = [];
+
+ const word = a => a.slice(1).join('');
+ const binary = (n,r) => n.toString(2).padStart(r,'0');
+ const sum = a => a.reduce((x,y) => x+y,0);
+ const expression = a => a.length ? a.join(' ⊕ ') : '0';
+ const parityName = t => t ? 'odd' : 'even';
+
+ const phases = () => [
+  {kind:'count', title:'How many parity bits?'},
+  {kind:'place', title:'Place the data and parity bits'},
+  ...e.groups.map((g,i) => ({
+   kind:'parity', i, title:`Calculate P${g.p}`
+  })),
+  ...(e.extended ? [{
+   kind:'overall', title:'Add the overall parity bit P0'
+  }] : []),
+  {kind:'done', title:'The codeword is ready'}
+ ];
+
+ function showPanel(name){
+  for (const n of ['sender','receiver']) {
+   $(n).hidden = n !== name;
+   $(`${n}Tab`).setAttribute('aria-pressed', String(n === name));
+  }
+ }
+
+ function drawBits(id, values, highlight=[], interactive=false, fixed=0){
+  const selected = new Set(highlight);
+  $(id).innerHTML = values.slice(1).map((v,i) => {
+   const p = i+1, parity = labels[p][0] === 'P';
+   const changed = interactive && values[p] !== e.word[p];
+   const cls = `bit ${parity?'parity':'data'}
+    ${selected.has(p)?'covered':''}
+    ${changed?'changed':''} ${fixed===p?'fixed':''}`;
+   const tag = interactive ? 'button' : 'div';
+   const attrs = interactive
+    ? ` type="button" data-position="${p}" aria-pressed="${changed}"
+       aria-label="Flip ${labels[p]} at position ${p}, currently ${v}"`
+    : '';
+   return `<${tag} class="${cls}"${attrs}>
+    <small>${p>e.n?'Extra':`pos ${p}`}</small>
+    <b>${v}</b><small>${labels[p]}</small>
+   </${tag}>`;
+  }).join('');
+ }
+
+ function countTable(){
+  return `<div class="scroll"><table>
+   <thead><tr><th>Try r</th><th>2ʳ</th>
+   <th>m + r + 1</th><th>Enough?</th></tr></thead><tbody>
+   ${Array.from({length:e.r},(_,i)=>i+1).map(r=>`
+    <tr><td>${r}</td><td>${2**r}</td>
+    <td>${e.data.length+r+1}</td>
+    <td>${r===e.r?'✓ Yes, choose this':'No'}</td></tr>
+   `).join('')}
+   </tbody></table></div>`;
+ }
+
+ function renderSender(){
+  const all = phases(), phase = all[stage];
+  $('stepTitle').textContent = phase.title;
+  $('stepNumber').textContent = `Step ${stage+1} of ${all.length}`;
+  $('previous').disabled = stage === 0;
+  $('next').disabled = stage === all.length-1;
+  $('progress').value = stage;
+  $('progress').max = all.length-1;
+  $('senderBits').hidden = phase.kind === 'count';
+
+  let highlighted = [], content = '';
+  const shown = e.word.slice();
+
+  for (const [i,g] of e.groups.entries()) {
+   if (!['overall','done'].includes(phase.kind) &&
+       !(phase.kind === 'parity' && i <= phase.i))
+    shown[g.p] = '?';
+  }
+
+  if (e.extended && !['overall','done'].includes(phase.kind))
+   shown[e.n+1] = '?';
+
+  if (phase.kind === 'count') {
+   content = `
+    <p>There are <b>m = ${e.data.length} data bits</b>.
+    Choose the smallest r satisfying:</p>
+    <p class="formula">2ʳ ≥ m + r + 1</p>
+    <p>The check bits need enough combinations to identify every bit
+    position, plus “no error detected”.</p>
+    ${countTable()}
+    <p>Use <b>${e.r} Hamming parity bits</b>.
+    The basic word has <b>${e.n} bits</b>
+    ${e.extended?', plus one overall parity bit P0':''}.</p>`;
+  } else if (phase.kind === 'place') {
+   content = `
+    <p>Reserve positions <b>${e.groups.map(g=>g.p).join(', ')}</b>
+    for parity bits. These positions are powers of two.</p>
+    <p>Insert <code>${e.data}</code> into the other positions,
+    from left to right. Question marks are the parity bits we
+    have not calculated yet.</p>
+    <p class="muted">In this lab, position 1 is on the left.
+    The same ordering is used at both ends.</p>`;
+  } else if (phase.kind === 'parity') {
+   const g = e.groups[phase.i];
+   highlighted = g.positions;
+   content = `
+    <p><b>P${g.p}</b> checks positions
+    <b>${g.positions.join(', ')}</b>, including itself.</p>
+    <p>Starting at position ${g.p}: check ${g.p}
+    position${g.p===1?'':'s'}, skip ${g.p}, then repeat.</p>
+    <p>Data positions in this group:
+    <b>${g.inputs.join(', ')}</b>.</p>
+    <p class="formula">P${g.p} = ${expression(g.values)}
+    ${e.target?' ⊕ 1':''} = <b>${g.value}</b></p>
+    <p>There are ${sum(g.values)} ones before adding P${g.p}.
+    Add <b>${g.value}</b>, making ${sum(g.values)+g.value} ones:
+    <b>${e.mode} parity</b>.</p>`;
+  } else if (phase.kind === 'overall') {
+   highlighted = Array.from({length:e.n+1},(_,i)=>i+1);
+   content = `
+    <p>P0 protects the entire codeword.
+    It is a separate extra bit, placed at the end.</p>
+    <p class="formula">P0 =
+    ${expression(e.word.slice(1,e.n+1))} = <b>${e.overall}</b></p>
+    <p>The overall parity is <b>always even in this app</b>,
+    including when the Hamming groups use odd parity.</p>`;
+  } else {
+   content = `
+    <p>All parity bits are filled in.
+    Transmit this complete codeword:</p>
+    <p class="formula">${word(e.word)}</p>
+    <p>${e.data.length} data bits + ${e.r} Hamming parity bits
+    ${e.extended?' + 1 overall parity bit':''} =
+    <b>${e.word.length-1} transmitted bits</b>.</p>
+    <p>Open <b>Receiver</b> to introduce an error
+    and recover the data.</p>`;
+  }
+
+  $('stepContent').innerHTML = content;
+  drawBits('senderBits', shown, highlighted);
+
+  const positions = Array.from({length:e.n},(_,i)=>i+1);
+  $('positionMap').innerHTML = `<table><tbody>
+   <tr><th>Position</th>
+    ${positions.map(p=>`<td>${p}</td>`).join('')}</tr>
+   <tr><th>Binary position</th>
+    ${positions.map(p=>`<td><code>${binary(p,e.r)}</code></td>`).join('')}</tr>
+   <tr><th>Role</th>
+    ${positions.map(p=>`<td>${labels[p]}</td>`).join('')}</tr>
+   <tr><th>Final value</th>
+    ${positions.map(p=>`<td>${e.word[p]}</td>`).join('')}</tr>
+   </tbody></table>`;
+
+  $('worked').innerHTML = `
+   <p><b>1.</b> m = ${e.data.length}; choose r = ${e.r}
+   because ${2**e.r} ≥ ${e.data.length+e.r+1}.</p>
+   <p><b>2.</b> Reserve ${e.groups.map(g=>`P${g.p}`).join(', ')}.
+   Fill the remaining positions with ${e.data}.</p>
+   <p><b>3.</b> Calculate each parity bit using ${e.mode} parity:</p>
+   <div class="scroll"><table>
+   <thead><tr><th>Parity bit</th><th>Checked positions</th>
+   <th>Calculation</th><th>Value</th></tr></thead><tbody>
+   ${e.groups.map(g=>`
+    <tr><td>P${g.p}</td><td>${g.positions.join(', ')}</td>
+    <td><code>${expression(g.values)}${e.target?' ⊕ 1':''}</code></td>
+    <td><b>${g.value}</b></td></tr>`).join('')}
+   </tbody></table></div>
+   ${e.extended?`
+    <p><b>4.</b> XOR all ${e.n} basic Hamming bits:
+    P0 = ${e.overall}. Append P0 for even overall parity.</p>`:''}
+   <p><b>${e.extended?'5':'4'}.</b> Transmitted word,
+   left to right: <code class="wrap">${word(e.word)}</code>.</p>`;
+ }
+
+ function renderReceiver(){
+  const result = Hamming.inspect(e, received);
+  const selected = result.checks.find(g=>g.p===selectedCheck)
+   || result.checks[0];
+  selectedCheck = selected.p;
+
+  drawBits('receivedBits', received, selected.positions, true);
+  $('receivedWord').textContent = word(received);
+  $('checkFocus').textContent =
+   `Highlighted group: P${selected.p} checks ${selected.positions.join(', ')}`;
+
+  $('checkRows').innerHTML = result.checks.map(g=>`
+   <tr class="${g.p===selectedCheck?'activeRow':''}">
+    <td><button class="tiny" data-check="${g.p}"
+     aria-label="Highlight check P${g.p}">P${g.p}</button></td>
+    <td>${g.positions.join(', ')}</td>
+    <td><code>${expression(g.values)}</code></td>
+    <td>${sum(g.values)} ones (${parityName(g.observed)})</td>
+    <td class="${g.failed?'fail':'pass'}">${g.failed?'Fail':'Pass'}</td>
+    <td><b>S${g.p} = ${g.failed}</b></td>
+   </tr>`).join('');
+
+  const reverse = result.checks.slice().reverse();
+  $('syndrome').innerHTML = `
+   <div class="syndromeBits">
+    ${reverse.map(g=>`
+     <div><small>S${g.p}</small><b>${g.failed}</b></div>`).join('')}
+   </div>
+   <p class="formula">${reverse.map(g=>g.failed).join('')}₂ =
+   <b>${result.syndrome}</b></p>
+   <p>Read the check results from highest weight to lowest:
+   ${reverse.map(g=>`S${g.p}`).join(', ')}.</p>
+   <p>Failed weights:
+   ${result.checks.filter(g=>g.failed).map(g=>g.p).join(' + ')||'none'}
+   → ${result.syndrome}.</p>`;
+
+  $('overallCheck').hidden = !e.extended;
+  $('overallCheck').textContent =
+   `Overall parity, including P0: ${sum(received.slice(1))} ones → ${
+    result.overallFailed
+     ?'odd, so the overall check fails'
+     :'even, so the overall check passes'}.`;
+
+  const positionName = result.position === e.n+1
+   ? 'P0' : `position ${result.position}`;
+
+  const messages = {
+   clear:[
+    'No error detected',
+    'All checks match. A zero syndrome alone is not a guarantee against arbitrary multiple-bit errors.'
+   ],
+   single:[
+    `${positionName} is indicated`,
+    e.extended
+     ? 'Assuming no more than two bits changed, this identifies a single-bit error. Flip the indicated bit.'
+     : 'Assuming no more than one bit changed, the syndrome is its position. Flip the indicated bit.'
+   ],
+   double:[
+    'An uncorrectable error is detected',
+    'The syndrome is nonzero but overall parity passes. Under the at-most-two-error assumption, two bits changed. Do not correct; request retransmission.'
+   ],
+   invalid:[
+    'This pattern cannot be corrected',
+    'The syndrome points outside this shortened codeword, so it cannot describe a single-bit error here.'
+   ]
+  };
+
+  $('diagnosis').className = `notice ${
+   result.kind==='clear'?'good':result.kind==='single'?'info':'warning'}`;
+  $('diagnosis').innerHTML =
+   `<b>${messages[result.kind][0]}</b><p>${messages[result.kind][1]}</p>`;
+
+  $('correct').disabled = !['clear','single'].includes(result.kind);
+  $('correct').textContent = result.kind === 'clear'
+   ? 'Extract data' : 'Apply indicated correction';
+
+  const changes = received.slice(1).flatMap((v,i)=>
+   v !== e.word[i+1] ? [i+1>e.n?'P0':i+1] : []);
+
+  $('simulation').textContent = `Simulation record: ${
+   changes.length
+    ?`you changed ${changes.length} bit(s): ${changes.join(', ')}.`
+    :'no bits changed.'
+   } The receiver calculates from the received bits, without looking at the original.`;
+
+  $('limit').textContent = e.extended
+   ? 'Extended Hamming (SECDED) corrects one bit and detects two bits. Three or more errors are outside that guarantee.'
+   : 'Basic Hamming corrects one bit. Two or more errors can produce a misleading syndrome and a wrong correction.';
+
+  $('correction').hidden = !showCandidate;
+  if (showCandidate) {
+   drawBits('correctedBits', result.candidate, [], false, result.position);
+   $('decoded').textContent = result.data;
+   $('correctionNote').textContent =
+    (result.position
+     ? `${positionName}: ${received[result.position]} → ${result.candidate[result.position]}. `
+     : 'No bit was flipped. ') +
+    'Remove the parity positions and read the data positions from left to right.';
+   $('verification').textContent = result.data === e.data
+    ? 'Simulation verification: decoded data matches the original.'
+    : 'Simulation verification: decoded data does NOT match the original. This demonstrates the limit of correcting multiple errors.';
+  }
+ }
+
+ function build(){
+  try {
+   const next = Hamming.encode(
+    $('dataInput').value,
+    $('parityMode').value,
+    $('extended').checked
+   );
+   e = next;
+   received = e.word.slice();
+   stage = 0;
+   selectedCheck = 1;
+   showCandidate = false;
+
+   let d = 0;
+   labels = [''];
+   for (let p=1; p<=e.n; p++)
+    labels[p] = Hamming.isParity(p) ? `P${p}` : `D${++d}`;
+   if (e.extended) labels.push('P0');
+
+   $('formMessage').className = 'muted';
+   $('formMessage').textContent =
+    `Current example: ${e.data} · ${e.mode} parity · ${e.extended?'extended':'basic'} Hamming.`;
+   $('sizeBadge').textContent =
+    `${e.data.length} data → ${e.word.length-1} transmitted bits`;
+
+   renderSender();
+   renderReceiver();
+   showPanel('sender');
+  } catch (error) {
+   $('formMessage').className = 'fail';
+   $('formMessage').textContent =
+    error.message + ' The previous example remains below.';
+  }
+ }
+
+ $('settings').addEventListener('submit', event=>{
+  event.preventDefault();
+  build();
+ });
+
+ $('settings').addEventListener('input', ()=>{
+  $('formMessage').className = 'muted';
+  $('formMessage').textContent =
+   'Settings changed. Press Build example to update the calculations.';
+ });
+
+ for (const [id,value] of [
+  ['smallExample','1011'],
+  ['largeExample','110101100101']
+ ]) {
+  $(id).onclick = ()=>{
+   $('dataInput').value = value;
+   build();
+  };
+ }
+
+ $('senderTab').onclick = ()=>showPanel('sender');
+ $('receiverTab').onclick = ()=>showPanel('receiver');
+
+ $('previous').onclick = ()=>{
+  if (stage>0) {stage--;renderSender();}
+ };
+ $('next').onclick = ()=>{
+  if (stage<phases().length-1) {stage++;renderSender();}
+ };
+ $('restart').onclick = ()=>{
+  stage=0;renderSender();
+ };
+ $('finish').onclick = ()=>{
+  stage=phases().length-1;
+  renderSender();
+  $('solution').open=true;
+ };
+
+ $('receivedBits').onclick = event=>{
+  const bit = event.target.closest('button[data-position]');
+  if (!bit) return;
+  const p = Number(bit.dataset.position);
+  received[p] ^= 1;
+  showCandidate = false;
+  renderReceiver();
+  $('receivedBits').querySelector(`[data-position="${p}"]`).focus();
+ };
+
+ $('checkRows').onclick = event=>{
+  const button = event.target.closest('button[data-check]');
+  if (!button) return;
+  selectedCheck = Number(button.dataset.check);
+  renderReceiver();
+  $('checkRows').querySelector(`[data-check="${selectedCheck}"]`).focus();
+ };
+
+ $('nextCheck').onclick = ()=>{
+  const i = e.groups.findIndex(g=>g.p===selectedCheck);
+  selectedCheck = e.groups[(i+1)%e.groups.length].p;
+  renderReceiver();
+ };
+
+ $('oneError').onclick = ()=>{
+  received=e.word.slice();
+  received[Math.min(5,e.n)]^=1;
+  showCandidate=false;
+  renderReceiver();
+ };
+
+ $('twoErrors').onclick = ()=>{
+  received=e.word.slice();
+  received[1]^=1;
+  received[2]^=1;
+  showCandidate=false;
+  renderReceiver();
+ };
+
+ $('restore').onclick = ()=>{
+  received=e.word.slice();
+  showCandidate=false;
+  renderReceiver();
+ };
+
+ $('correct').onclick = ()=>{
+  showCandidate=true;
+  renderReceiver();
+ };
+
+ $('download').onclick = ()=>{
+  const clone = document.documentElement.cloneNode(true);
+  clone.querySelector('#dataInput').setAttribute('value',e.data);
+  clone.querySelectorAll('#parityMode option').forEach(o=>
+   o.toggleAttribute('selected',o.value===e.mode));
+  clone.querySelector('#extended').toggleAttribute('checked',e.extended);
+
+  const url = URL.createObjectURL(new Blob(
+   ['<!doctype html>\n',clone.outerHTML],
+   {type:'text/html;charset=utf-8'}
+  ));
+  const a = document.createElement('a');
+  a.href=url;
+  a.download='hamming.html';
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+ };
+
+ build();
+})();
+</script>
+</body>
+</html>

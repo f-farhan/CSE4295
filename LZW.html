@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Create LZW compression and decompression tables from your own text. Follow each dictionary entry, output code, and decoding step using the CSE 4295 Lecture 7 slide method.">
+  <meta name="theme-color" content="#142544">
+  <title>LZW Algorithm</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23142544'/%3E%3Cpath d='M7 9h18M7 16h8M7 23h18' stroke='%23fff' stroke-width='3'/%3E%3Cpath d='m20 12 5 4-5 4' fill='none' stroke='%237bbcff' stroke-width='3'/%3E%3C/svg%3E">
+  <style>
+    :root{color-scheme:light;--navy:#142544;--ink:#182943;--muted:#53647b;--blue:#1e57c8;--blue-dark:#15429a;--pale:#edf4ff;--line:#d6dfec;--paper:#fff;--bg:#f1f4f9;--green:#116847;--green-bg:#eaf7f0;--amber:#82520a;--amber-bg:#fff4da;--mono:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input,select,textarea{font:inherit}button,select{cursor:pointer}button{min-height:44px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);padding:9px 14px;font-weight:650;line-height:1.3}button:hover:not(:disabled){border-color:#7898c9;background:#f6f9ff}button:disabled{cursor:default;opacity:.42}button.primary{background:var(--blue);border-color:var(--blue);color:white}button.primary:hover:not(:disabled){background:var(--blue-dark)}button:focus-visible,textarea:focus-visible,select:focus-visible,a:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:3px solid #e28a0c;outline-offset:3px}textarea,select{width:100%;border:1px solid #aebdd0;border-radius:8px;padding:11px 12px;color:var(--ink);background:white}textarea{display:block;resize:vertical;min-height:76px;font:18px/1.5 var(--mono)}select{min-height:46px}label{display:block;font-size:14px;font-weight:700;margin-bottom:7px}h1,h2,h3,p{margin:0}h1{font-size:clamp(23px,3vw,30px);line-height:1.2;letter-spacing:-.025em}h2{font-size:21px;line-height:1.3}h3{font-size:16px}code,.mono{font-family:var(--mono)}code{overflow-wrap:anywhere}[hidden]{display:none!important}.muted{color:var(--muted)}.small{font-size:14px}.eyebrow{font-size:12px;font-weight:750;letter-spacing:.1em;text-transform:uppercase}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}.skip{position:absolute;left:12px;top:-80px;background:#fff;padding:10px;z-index:9}.skip:focus{top:12px}
+    .topbar{background:var(--navy);color:white;border-bottom:4px solid #4b91ef}.topbar-inner{max-width:1376px;margin:auto;padding:22px 28px;display:flex;align-items:center;justify-content:space-between;gap:22px}.brand{display:flex;align-items:center;gap:15px}.brand-mark{font:700 15px/1 var(--mono);border:1px solid #6783ac;background:#213b61;padding:13px 9px;border-radius:9px;color:#bbdbff}.topbar p{color:#cfdbef;margin-top:5px;font-size:14px}.download{background:transparent;border-color:#647b9e;color:white;white-space:nowrap}.download:hover:not(:disabled){background:#263e60;border-color:#98b2db}.shell{max-width:1376px;margin:auto;padding:24px 28px 40px;display:grid;gap:20px}.panel{background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:0 2px 3px #15244005}.input-panel{padding:20px}.input-row{display:grid;grid-template-columns:minmax(220px,1fr) 260px auto;gap:16px;align-items:end}.form-actions{align-self:end;padding-bottom:1px}.form-actions button{min-height:51px;white-space:nowrap}.examples{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}.examples span{margin-right:2px}.example{font-size:14px;min-height:36px;padding:6px 10px;background:#f4f7fc}.form-meta{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:10px;font-size:14px;color:var(--muted)}.feedback{margin-top:12px;border-left:3px solid var(--blue);padding:9px 12px;background:var(--pale);font-size:14px}.feedback.error{color:#8f232b;background:#fff0f1;border-color:#c33542}.input-summary{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;padding:14px 20px;border-top:1px solid var(--line);background:#fbfcff;border-radius:0 0 12px 12px}.input-summary p{font-size:14px}.input-summary code{font-size:16px;color:var(--blue-dark);white-space:pre-wrap;overflow-wrap:anywhere}.input-summary .initial{flex:0 0 300px;border-left:1px solid var(--line);padding-left:20px}.panel.input-wrap .input-panel{border:0;box-shadow:none}
+    .workspace{overflow:hidden}.tabs{display:flex;gap:0;border-bottom:1px solid var(--line);background:#f8faff;padding:0 20px}.tab{border:0;border-bottom:3px solid transparent;border-radius:0;background:transparent;padding:15px 20px;display:flex;align-items:center;gap:10px}.tab[aria-selected="true"]{border-bottom-color:var(--blue);color:var(--blue-dark);background:white}.tab-number{font:600 13px var(--mono);border:1px solid #a9b9cf;border-radius:5px;min-width:26px;padding:2px}.tab[aria-selected="true"] .tab-number{background:var(--blue);color:#fff;border-color:var(--blue)}.lesson-top{padding:20px 22px 0;display:flex;justify-content:space-between;gap:20px;align-items:start}.lesson-top p{margin-top:6px;max-width:810px;color:var(--muted);font-size:14px}.method-badge{white-space:nowrap;color:var(--muted);font-size:12px;border:1px solid var(--line);border-radius:20px;padding:4px 10px}.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:18px 22px 14px}.step-count{font-variant-numeric:tabular-nums;color:var(--blue-dark);font-weight:700;margin-right:auto;white-space:nowrap}.controls button{font-size:14px}.text-button{border-color:transparent;background:transparent;color:var(--muted)}.progress{height:3px;margin:0 22px;background:#e6edf8}.progress span{display:block;height:100%;background:var(--blue);width:0;transition:width .15s ease}.explanation{margin:16px 22px 18px;padding:16px 18px;border:1px solid #bed3f4;border-radius:10px;background:var(--pale);display:grid;grid-template-columns:minmax(190px,.7fr) minmax(0,1.8fr);gap:22px}.explanation .step-title{font-size:20px;line-height:1.4;font-weight:700;margin-top:4px;overflow-wrap:anywhere}.explanation .rule{margin-top:8px;font-size:14px;color:var(--blue-dark)}.explanation ol{padding:0 0 0 22px;margin:0}.explanation li{padding-left:3px;margin:3px 0}.explanation strong{color:var(--blue-dark)}.explanation .special-note{margin-top:10px;font-size:14px;color:var(--amber);border-top:1px solid #c6d8f5;padding-top:10px}.work-grid{display:grid;grid-template-columns:minmax(0,1fr) 240px;gap:20px;padding:0 22px 20px;align-items:start}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:9px;max-height:570px;scrollbar-color:#9fb2cb #f3f6fb}.work-table{border-collapse:separate;border-spacing:0;table-layout:fixed;width:100%;min-width:650px;font-size:16px}.work-table th{position:sticky;top:0;z-index:1;background:var(--navy);color:white;text-align:left;padding:13px 12px;line-height:1.3;font-size:14px;font-weight:650}.work-table th small{display:block;font-size:12px;color:#d7e4f7;font-weight:400;margin-top:4px}.work-table td{border-bottom:1px solid #e3e9f3;padding:12px;vertical-align:top;line-height:1.55;overflow-wrap:anywhere}.work-table tr:last-child td{border-bottom:0}.work-table tr{cursor:pointer}.work-table tr:nth-child(even){background:#f8faff}.work-table tr:hover{background:#eef4ff}.work-table tr.active{background:#e7f0ff}.work-table tr.active td:first-child{box-shadow:inset 4px 0 var(--blue)}.work-table tr.future{color:#60748f}.work-table td:first-child{padding-left:15px}.row-select{font:650 12px var(--mono);min-height:26px;min-width:26px;border:1px solid #bac9dd;border-radius:5px;padding:2px 5px;margin-right:9px;background:#fff;vertical-align:top;color:var(--muted)}.active .row-select{background:var(--blue);border-color:var(--blue);color:white}.remaining{font-family:var(--mono);font-size:15px;overflow-wrap:anywhere;white-space:pre-wrap}.found-text{font-family:var(--mono);font-weight:750;color:#163f86}mark{background:#b9d5ff;color:#132f62;border-radius:3px;padding:2px 0;font-weight:700}.code-tag{color:var(--blue-dark);font:650 15px var(--mono);white-space:nowrap}.new-phrase{color:var(--green);font-family:var(--mono);font-weight:650}.end-note{font-size:14px;color:var(--muted)}.table-hint{font-size:13px;color:var(--muted);margin-top:9px}.dictionary{background:#f6f8fc;border:1px solid var(--line);border-radius:9px;overflow:hidden}.dictionary-head{padding:13px 14px;border-bottom:1px solid var(--line)}.dictionary-head h3{font-size:15px}.dictionary-head p{font-size:13px;margin-top:3px;color:var(--muted)}.dictionary-list{max-height:440px;overflow:auto;scrollbar-color:#9fb2cb #f3f6fb}.dictionary-empty{font-size:14px;color:var(--muted);padding:16px 14px}.dict-entry{display:grid;grid-template-columns:56px minmax(0,1fr);gap:8px;padding:8px 14px;border-bottom:1px solid #e4eaf3;font:14px/1.5 var(--mono)}.dict-entry:last-child{border-bottom:0}.dict-entry.latest{background:var(--green-bg);color:var(--green)}.dict-entry .phrase{overflow-wrap:anywhere;font-weight:650}.dict-footer{padding:10px 14px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}.output-panel{margin:0 22px 22px;padding:17px 18px;border:1px solid var(--line);border-radius:9px}.output-heading{display:flex;gap:12px;justify-content:space-between;align-items:center}.output-heading span{font-size:13px;color:var(--muted)}.code-stream{font:600 17px/1.8 var(--mono);margin-top:10px;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--blue-dark);max-height:170px;overflow:auto}.stream-parts{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px;max-height:170px;overflow:auto}.stream-piece{font:16px/1.4 var(--mono);padding:6px 8px;border:1px solid var(--line);background:#f7faff;border-radius:5px;overflow-wrap:anywhere;max-width:100%}.stream-piece.current{background:var(--blue);border-color:var(--blue);color:#fff}.output-panel details{margin-top:10px;font-size:14px}.output-panel details code{display:block;margin-top:8px;font-size:14px;max-height:120px;overflow:auto}.restored{border-top:1px solid var(--line);margin-top:14px;padding-top:12px}.restored pre{margin:6px 0 0;font:16px/1.5 var(--mono);white-space:pre-wrap;overflow-wrap:anywhere;max-height:130px;overflow:auto}.pass{color:var(--green);font-weight:650}.partial{color:var(--muted);font-size:14px}
+    .result-panel{padding:20px 22px}.result-top{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:16px}.result-top h2{font-size:19px}.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border:1px solid var(--line);border-radius:9px;overflow:hidden}.metric{padding:15px 18px;border-right:1px solid var(--line)}.metric:last-child{border-right:0;background:#f6f9ff}.metric-label{color:var(--muted);font-size:14px}.metric-number{font-size:25px;font-weight:750;letter-spacing:-.025em;margin-top:3px;line-height:1.3}.metric-formula{font-size:14px;color:var(--muted);margin-top:5px}.size-verdict{margin-top:13px;font-size:14px;padding:10px 13px;border-left:3px solid var(--green);background:var(--green-bg);color:var(--green)}.size-verdict.expanded{border-color:#b67c1d;background:var(--amber-bg);color:var(--amber)}.method-note{margin-top:13px;color:var(--muted);font-size:13px}.reference{padding:17px 22px}.reference summary{cursor:pointer;font-size:14px;font-weight:650}.reference-content{display:grid;grid-template-columns:1fr 1fr;gap:24px;padding-top:15px;font-size:14px;color:var(--muted)}.reference-content p+p{margin-top:10px}.base-codes{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;max-height:180px;overflow:auto}.base-code{font:13px var(--mono);background:#edf2fa;padding:5px 8px;border-radius:4px;color:var(--ink)}footer{font-size:13px;color:var(--muted);display:flex;justify-content:space-between;gap:15px;padding:0 3px}.no-js{padding:20px;background:#fff2de;color:#714514}
+    @media(min-width:1500px){.shell{padding-top:30px}.work-table{font-size:17px}.remaining{font-size:16px}}
+    @media(max-width:1080px){.input-row{grid-template-columns:minmax(0,1fr) 240px}.form-actions{grid-column:1/-1}.form-actions button{min-height:44px}.work-grid{grid-template-columns:minmax(0,1fr) 205px}.explanation{grid-template-columns:1fr;gap:12px}.explanation .rule{display:none}.explanation .step-title{font-size:19px}.input-summary .initial{flex-basis:260px}}
+    @media(max-width:820px){.work-grid{grid-template-columns:1fr}.dictionary-list{max-height:170px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}.dict-entry{padding:8px 10px;grid-template-columns:48px 1fr;gap:4px;border-right:1px solid var(--line)}.dictionary-empty{grid-column:1/-1}.dictionary-head{display:flex;justify-content:space-between;gap:12px}.table-wrap{max-height:520px}.method-badge{display:none}.input-summary{flex-direction:column;gap:12px}.input-summary .initial{flex-basis:auto;border:0;padding:0}.input-summary .initial p{display:inline}.input-summary .initial strong{margin-right:8px}.lesson-top p{max-width:none}}
+    @media(max-width:580px){.topbar-inner{padding:18px 16px;align-items:flex-start}.brand{gap:10px}.brand-mark{display:none}h1{font-size:23px}.topbar p{max-width:240px;font-size:13px}.download{font-size:13px;padding:8px 10px;white-space:normal;max-width:100px}.shell{padding:16px 12px 26px;gap:15px}.input-panel{padding:16px}.input-row{grid-template-columns:1fr;gap:12px}.form-actions{grid-column:auto}.form-actions button{width:100%}.input-summary{padding:12px 16px}.tabs{padding:0 5px}.tab{flex:1;padding:14px 9px;font-size:14px;gap:7px;justify-content:center}.tab-number{display:none}.lesson-top{padding:17px 16px 0}.controls{padding:16px 16px 12px;gap:7px}.step-count{width:100%;margin-bottom:3px}.controls button{padding:8px 10px;font-size:13px}.progress{margin:0 16px}.explanation{margin:14px 16px;padding:14px;gap:8px;font-size:15px}.explanation .step-title{font-size:18px}.work-grid{padding:0 16px 16px;gap:14px}.dictionary-list{grid-template-columns:repeat(2,minmax(0,1fr))}.dictionary-head{display:block}.output-panel{margin:0 16px 16px;padding:14px}.output-heading{align-items:flex-start}.result-panel{padding:17px 16px}.result-top{align-items:start}.result-top .pass{font-size:13px}.metrics{grid-template-columns:1fr}.metric{border-right:0;border-bottom:1px solid var(--line);padding:12px 14px}.metric:last-child{border-bottom:0}.metric-number{font-size:23px}.reference{padding:15px 16px}.reference-content{grid-template-columns:1fr;gap:14px}footer{flex-direction:column;gap:4px}}
+    @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+    @media print{body{background:#fff;color:#000;font-size:12px}.topbar{background:#fff;color:#000;border-bottom:2px solid #000}.topbar p{color:#444}.download,.controls,.examples,.form-meta,.reference,.form-actions,.progress,footer{display:none!important}.shell{padding:10px;max-width:none}.panel{box-shadow:none;break-inside:avoid}.workspace{break-inside:auto}.work-grid{display:block}.dictionary{margin-top:12px}.dictionary-list{display:grid;grid-template-columns:repeat(4,1fr);max-height:none}.table-wrap{max-height:none;overflow:visible}.work-table{min-width:0;font-size:12px}.work-table th{position:static;background:#eee;color:#000}.work-table th small{color:#444}.remaining,.code-tag{font-size:12px}.work-table td{padding:7px}.row-select{display:none}.table-wrap{border:1px solid #999}.input-summary,.explanation,.work-table tr.active{background:#f5f5f5}.code-stream,.stream-parts{max-height:none}.brand-mark{display:none}.tabs{padding:0}.tab{padding:8px}.tab-number{display:none}.input-row{display:block}.input-row>div{margin-bottom:10px}.input-row textarea{min-height:0}.metrics{grid-template-columns:repeat(3,1fr)}.metric{border-bottom:0;border-right:1px solid var(--line)}}
+  </style>
+</head>
+<body>
+  <a class="skip" href="#text-input">Skip to your text</a>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand"><div class="brand-mark" aria-hidden="true">LZW</div><div><h1>Lempel-Ziv-Welch (LZW) </h1><p>Compression & Decompression Algorithm.</p></div></div>
+      
+    </div>
+  </header>
+  <noscript><p class="no-js">Enable JavaScript in your browser to create and explore the LZW tables. The downloaded app works offline.</p></noscript>
+  <main class="shell">
+    <section class="panel input-wrap" aria-label="Create a worked example">
+      <form id="input-form" class="input-panel">
+        <div class="input-row">
+          <div><label for="text-input">Your sentence</label><textarea id="text-input" rows="2" spellcheck="false" autocomplete="off" aria-describedby="input-help">neveroddoreven</textarea></div>
+          <div><label for="text-mode">Treat the text as</label><select id="text-mode"><option value="exact">Keep exactly as entered</option></select></div>
+          <div class="form-actions"><button type="submit" class="primary">Create tables</button></div>
+        </div>
+        <div class="examples"><span class="small muted">Examples:</span><button class="example" type="button" data-example="never">neveroddoreven</button><button class="example" type="button" data-example="abra">ABRA…</button><button class="example" type="button" data-example="panama">Panama</button><button class="example" type="button" data-example="special">AAA</button></div>
+        <div class="form-meta"><span id="input-help">Spaces and case count. Enter up to 2,000 UTF-8 bytes.</span><span id="input-size"></span></div>
+        <p id="input-feedback" class="feedback" role="status" hidden></p>
+      </form>
+      <div class="input-summary"><div><p class="muted">Text used for these tables</p><code id="processed-text"></code><p class="muted" id="processed-note"></p></div><div class="initial"><p><strong>Start with the same dictionary.</strong></p><p>Single bytes: <b>0–255</b><br>First new phrase: <b>256</b></p></div></div>
+    </section>
+
+    <section class="panel workspace" aria-label="LZW worked tables">
+      <div class="tabs" role="tablist" aria-label="Algorithm direction">
+        <button type="button" role="tab" class="tab" id="compress-tab" aria-selected="true" aria-controls="table-panel" data-mode="compress"><span class="tab-number" aria-hidden="true">01</span>Compression</button>
+        <button type="button" role="tab" class="tab" id="decompress-tab" aria-selected="false" aria-controls="table-panel" tabindex="-1" data-mode="decompress"><span class="tab-number" aria-hidden="true">02</span>Decompression</button>
+      </div>
+      <div id="table-panel" role="tabpanel" aria-labelledby="compress-tab" tabindex="0">
+        <div class="lesson-top"><div><h2 id="table-title">Build the compression table</h2><p id="table-rule"></p></div><span class="method-badge">Lecture 7 · pp. 40–60</span></div>
+        <div class="controls"><span class="step-count" id="step-count" aria-live="polite"></span><button type="button" id="restart" class="text-button">Restart</button><button type="button" id="previous">← Previous</button><button type="button" id="next" class="primary">Next row →</button><button type="button" id="show-all">Show complete table</button></div>
+        <div class="progress" aria-hidden="true"><span id="progress-fill"></span></div>
+        <div class="explanation" id="explanation" aria-live="polite" aria-atomic="true"></div>
+        <div class="work-grid">
+          <div><div class="table-wrap" id="table-scroll" role="region" aria-label="Worked example table; scroll to see more" tabindex="0"><table class="work-table" id="worked-table"><caption class="sr-only" id="table-caption"></caption><colgroup id="table-columns"></colgroup><thead id="table-head"></thead><tbody id="table-body"></tbody></table></div><p class="table-hint" id="table-hint"></p></div>
+          <aside class="dictionary" aria-label="New dictionary entries"><div class="dictionary-head"><h3>New dictionary entries</h3><p id="dictionary-step"></p></div><div class="dictionary-list" id="dictionary-list"></div><p class="dict-footer" id="next-code"></p></aside>
+        </div>
+        <div class="output-panel"><div class="output-heading"><h3 id="output-title"></h3><span id="output-count"></span></div><div id="output-stream"></div><details id="numeric-details"><summary>See the actual numeric codes</summary><code id="numeric-codes"></code></details><div id="restored-block" class="restored" hidden><p id="restored-status"></p><pre id="restored-text"></pre></div></div>
+      </div>
+    </section>
+
+    <section class="panel result-panel" aria-labelledby="result-title"><div class="result-top"><h2 id="result-title">Size of the complete example</h2><span id="roundtrip" class="pass"></span></div><div class="metrics"><div class="metric"><p class="metric-label">Original text</p><p class="metric-number" id="original-bits"></p><p class="metric-formula" id="original-formula"></p></div><div class="metric"><p class="metric-label">LZW output</p><p class="metric-number" id="encoded-bits"></p><p class="metric-formula" id="encoded-formula"></p></div><div class="metric"><p class="metric-label">Difference</p><p class="metric-number" id="difference-bits"></p><p class="metric-formula" id="difference-percent"></p></div></div><p class="size-verdict" id="size-verdict"></p><p class="method-note" id="size-method"></p></section>
+
+    <details class="panel reference"><summary>How to read the notation and dictionary</summary><div class="reference-content"><div><p><strong>Notation:</strong> a single character such as <code>A</code> in the Output column stands for its numeric code, <code>65</code>. A learned phrase uses a code such as <code>&lt;256&gt;</code>. The computer sends numbers in both cases.</p><p><strong>The dictionary:</strong> the encoder and decoder each start with the same 256 single-byte entries. Both build their own new entries. This example does not send the completed dictionary.</p><p><strong>Visible whitespace:</strong> <code>␠</code> = space, <code>↵</code> = newline, <code>⇥</code> = tab. <code>\xNN</code> shows a non-printable or non-ASCII byte in hexadecimal. Non-ASCII characters can use several UTF-8 bytes.</p></div><div><p><strong>Initial codes used in this example</strong></p><div class="base-codes" id="base-codes"></div><p style="margin-top:12px"><strong>Reference:</strong> CSE 4295, Lecture 7</p></div></div></details>
+    <footer> <span>Developed by <a href="https://f-farhan.github.io/">Faisal Farhan</a> for CSE 4295 Course,AUST.     </span><span>Designed and developed with assistance from Claude and ChatGPT.</span>  </footer>
+  </main>
+  <script id="lzw-core">
+  const LZW = (() => {
+    const MAX_BYTES = 2000;
+    const utf8Encoder = new TextEncoder();
+    function prepare(text, mode = 'exact') {
+      if (typeof text !== 'string') throw new Error('Please enter a sentence.');
+      if (!['exact', 'slide57'].includes(mode)) throw new Error('Choose one of the two text modes.');
+      const processed = mode === 'slide57' ? text.replace(/[^A-Za-z]/g, '').toUpperCase() : text;
+      const bytes = utf8Encoder.encode(processed);
+      if (!bytes.length) throw new Error(mode === 'slide57' ? 'Enter at least one A–Z letter for slide 57 mode.' : 'Enter some text to create the tables.');
+      if (bytes.length > MAX_BYTES) throw new Error('Please use a shorter example: the limit is 2,000 UTF-8 bytes.');
+      if (new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes) !== processed) throw new Error('The text contains an incomplete Unicode character. Please retype that character.');
+      return { text: processed, bytes, binary: Array.from(bytes, b => String.fromCharCode(b)).join('') };
+    }
+    function encode(binary) {
+      const dictionary = new Map(Array.from({ length: 256 }, (_, i) => [String.fromCharCode(i), i]));
+      const rows = [], codes = [];
+      let nextCode = 256, position = 0;
+      while (position < binary.length) {
+        let found = binary[position], end = position + 1;
+        while (end < binary.length && dictionary.has(found + binary[end])) found += binary[end++];
+        const code = dictionary.get(found);
+        if (!Number.isInteger(code)) throw new Error('The encoder expects byte values from 0 to 255.');
+        const added = end < binary.length ? { phrase: found + binary[end], code: nextCode++ } : null;
+        if (added) dictionary.set(added.phrase, added.code);
+        rows.push({ start: position, end, remaining: binary.slice(position), found, code, added, nextByte: binary[end] ?? null });
+        codes.push(code);
+        position = end;
+      }
+      return { rows, codes };
+    }
+    function decode(codes) {
+      if (!Array.isArray(codes)) throw new Error('The decoder expects a list of numeric codes.');
+      const dictionary = new Map(Array.from({ length: 256 }, (_, i) => [i, String.fromCharCode(i)]));
+      const rows = [];
+      let nextCode = 256, previous = null, binary = '';
+      for (const code of codes) {
+        if (!Number.isInteger(code) || code < 0) throw new Error('Every code must be a non-negative integer.');
+        let output, special = false;
+        if (dictionary.has(code)) output = dictionary.get(code);
+        else if (previous !== null && code === nextCode) { output = previous + previous[0]; special = true; }
+        else throw new Error('Code ' + code + ' cannot be decoded at row ' + (rows.length + 1) + '.');
+        const added = previous !== null ? { phrase: previous + output[0], code: nextCode++ } : null;
+        if (added) dictionary.set(added.code, added.phrase);
+        rows.push({ code, output, previous, added, special });
+        binary += output;
+        previous = output;
+      }
+      return { rows, binary };
+    }
+    function textFromBytes(binary, partial = false) {
+      const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
+      return new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes, { stream: partial });
+    }
+    function phraseText(phrase) {
+      return Array.from(phrase, char => {
+        const byte = char.charCodeAt(0);
+        if (byte === 32) return '␠';
+        if (byte === 10) return '↵';
+        if (byte === 13) return '\\r';
+        if (byte === 9) return '⇥';
+        if (byte === 92) return '\\\\';
+        return byte >= 33 && byte <= 126 ? char : '\\x' + byte.toString(16).toUpperCase().padStart(2, '0');
+      }).join('');
+    }
+    function codeText(code) { return code < 256 ? phraseText(String.fromCharCode(code)) : '<' + code + '>'; }
+    function build(text, mode = 'exact') {
+      const source = prepare(text, mode);
+      const compression = encode(source.binary);
+      const decompression = decode(compression.codes);
+      const restored = textFromBytes(decompression.binary);
+      if (source.binary !== decompression.binary || source.text !== restored) throw new Error('The restored text did not match. Please rebuild the example.');
+      const width = Math.max(9, Math.ceil(Math.log2(Math.max(...compression.codes) + 1)));
+      return { ...source, mode, compression, decompression, restored, width, originalBits: source.bytes.length * 8, encodedBits: compression.codes.length * width };
+    }
+    return { MAX_BYTES, prepare, encode, decode, textFromBytes, phraseText, codeText, build };
+  })();
+  </script>
+  <script id="lzw-ui">
+  (() => {
+    const $ = id => document.getElementById(id);
+    const esc = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const phrase = value => esc(LZW.phraseText(value));
+    const tagged = code => '<span class="code-tag">&lt;' + code + '&gt;</span>';
+    const outputCode = code => code < 256 ? '<code>' + phrase(String.fromCharCode(code)) + '</code>' : tagged(code);
+    const dictionaryEntry = entry => '<span class="new-phrase">' + phrase(entry.phrase) + '</span> ' + tagged(entry.code);
+    const modes = ['compress', 'decompress'];
+    let result, mode = 'compress';
+    let positions = { compress: 0, decompress: 0 }, complete = { compress: false, decompress: false };
+    const rowsFor = () => mode === 'compress' ? result.compression.rows : result.decompression.rows;
+    const examples = {
+      never: { text: 'neveroddoreven', mode: 'exact' },
+      abra: { text: 'ABRAKADABRAABRAKADABRA', mode: 'exact' },
+      panama: { text: 'a man a plan a canal panama.', mode: 'slide57' },
+      special: { text: 'AAA', mode: 'exact' }
+    };
+    function updateInputSize() {
+      const count = new TextEncoder().encode($('text-input').value).length;
+      $('input-size').textContent = count.toLocaleString() + ' input bytes';
+    }
+    function feedback(message, error = false) {
+      $('input-feedback').textContent = message;
+      $('input-feedback').hidden = !message;
+      $('input-feedback').classList.toggle('error', error);
+      $('text-input').setAttribute('aria-invalid', error ? 'true' : 'false');
+    }
+    function createTables(text, textMode) {
+      const next = LZW.build(text, textMode);
+      result = next;
+      $('text-input').value = text;
+      $('text-mode').value = textMode;
+      mode = 'compress';
+      positions = { compress: 0, decompress: 0 };
+      complete = { compress: false, decompress: false };
+      feedback('');
+      updateInputSize();
+      renderSummary();
+      render();
+      $('table-scroll').scrollTop = 0;
+      return result;
+    }
+    function submit() {
+      try { createTables($('text-input').value, $('text-mode').value); }
+      catch (error) { feedback(error.message, true); }
+    }
+    function renderSummary() {
+      $('processed-text').textContent = result.text;
+      const characters = Array.from(result.text).length;
+      $('processed-note').textContent = characters + (characters === 1 ? ' character' : ' characters') + ' · ' + result.bytes.length + (result.bytes.length === 1 ? ' byte' : ' bytes') + (result.mode === 'slide57' ? ' · Spaces and punctuation removed; letters made uppercase.' : ' · Case, spaces and punctuation preserved.');
+      $('original-bits').textContent = result.originalBits.toLocaleString() + ' bits';
+      $('encoded-bits').textContent = result.encodedBits.toLocaleString() + ' bits';
+      $('original-formula').textContent = result.bytes.length + ' bytes × 8 bits';
+      $('encoded-formula').textContent = result.compression.codes.length + ' codes × ' + result.width + ' bits';
+      const difference = result.originalBits - result.encodedBits;
+      $('difference-bits').textContent = Math.abs(difference).toLocaleString() + (difference > 0 ? ' bits saved' : difference < 0 ? ' extra bits' : ' bits changed');
+      $('difference-percent').textContent = difference === 0 ? 'Same payload size' : (Math.abs(difference) / result.originalBits * 100).toFixed(1) + '% ' + (difference > 0 ? 'smaller' : 'larger') + ' than the original';
+      $('roundtrip').textContent = '✓ Restores the exact text';
+      $('size-verdict').classList.toggle('expanded', difference < 0);
+      $('size-verdict').textContent = difference > 0 ? 'This example saves space: repeated phrases are replaced by single codes.' : difference < 0 ? 'This example gets larger. The phrase reuse does not yet make up for the extra bits per code. LZW is lossless, but it does not make every input smaller.' : 'This example has the same payload size. The decoder still restores every original byte.';
+      $('size-method').textContent = 'Slide size model: at least 9 bits per output code. ' + (result.width > 9 ? 'This input needs ' + result.width + ' bits for its largest emitted code, so all codes here use that width. ' : '') + 'Counts are before byte padding, file headers or format-specific control codes. This demonstrates LZW; it does not create a GIF or TIFF file.';
+      $('base-codes').innerHTML = Array.from(new Set(result.bytes)).sort((a, b) => a - b).map(byte => '<span class="base-code">' + phrase(String.fromCharCode(byte)) + ' = ' + byte + '</span>').join('');
+    }
+    function renderExplanation(row, index) {
+      let title, rule, steps, note = '';
+      const numeric = '<strong>' + row.code + '</strong>';
+      if (mode === 'compress') {
+        title = 'Read ' + '<code>' + phrase(row.found) + '</code> → output ' + outputCode(row.code);
+        rule = 'Find the longest phrase already known.';
+        steps = ['Find <strong><code>' + phrase(row.found) + '</code></strong> in the current dictionary. Its code is ' + numeric + '.'];
+        if (row.added) {
+          steps.push('Try the next byte, <code>' + phrase(row.nextByte) + '</code>. The longer phrase <strong><code>' + phrase(row.added.phrase) + '</code></strong> is not in the dictionary yet.');
+          steps.push('Output ' + outputCode(row.code) + '. Add ' + dictionaryEntry(row.added) + ', then start again from <code>' + phrase(row.nextByte) + '</code>.');
+        } else steps.push('The input ends here. Output ' + outputCode(row.code) + '. There is no next byte, so add no new entry.');
+      } else {
+        title = 'Read ' + outputCode(row.code) + ' → write <code>' + phrase(row.output) + '</code>';
+        rule = 'Previous output + first byte of this output.';
+        if (row.special) {
+          steps = ['Code ' + numeric + ' is not in the decoder dictionary yet, but it is exactly the next free code.', 'Use previous output + its first byte: <code>' + phrase(row.previous) + '</code> + <code>' + phrase(row.previous[0]) + '</code> = <strong><code>' + phrase(row.output) + '</code></strong>. Write that phrase.', 'Add ' + dictionaryEntry(row.added) + ' to the decoder dictionary.'];
+          note = 'Special LZW case: the decoder can be one dictionary entry behind the encoder. Only the next free code can be handled this way.';
+        } else {
+          steps = ['Look up code ' + numeric + '. It means <strong><code>' + phrase(row.output) + '</code></strong>. Write that phrase to the output.'];
+          if (row.added) steps.push('Join the previous output <code>' + phrase(row.previous) + '</code> with the first byte of this output, <code>' + phrase(row.output[0]) + '</code>.', 'Add ' + dictionaryEntry(row.added) + ' to the decoder dictionary.');
+          else steps.push('This is the first code. There is no previous output yet, so add no new entry.');
+        }
+      }
+      $('explanation').innerHTML = '<div><p class="eyebrow muted">Row ' + (index + 1) + '</p><h3 class="step-title">' + title + '</h3><p class="rule">' + rule + '</p></div><div><ol>' + steps.map(text => '<li>' + text + '</li>').join('') + '</ol>' + (note ? '<p class="special-note">' + note + '</p>' : '') + '</div>';
+    }
+    function renderTable(rows, current) {
+      const compressing = mode === 'compress';
+      $('table-columns').innerHTML = compressing ? '<col style="width:42%"><col style="width:20%"><col style="width:16%"><col style="width:22%">' : '<col style="width:27%"><col style="width:30%"><col style="width:43%">';
+      $('table-head').innerHTML = compressing ? '<tr><th scope="col">Remaining Character String</th><th scope="col">Found Entry</th><th scope="col">Output</th><th scope="col">New Entry</th></tr>' : '<tr><th scope="col">First Character<small>Compressed code read</small></th><th scope="col">Output<small>Decoded phrase</small></th><th scope="col">New Entry</th></tr>';
+      $('table-caption').textContent = (compressing ? 'Compression' : 'Decompression') + ' table for the text shown above. Select a row number for its explanation.';
+      const visible = complete[mode] ? rows : rows.slice(0, current + 1);
+      $('table-body').innerHTML = visible.map((row, index) => {
+        const button = '<button class="row-select" type="button" data-row="' + index + '" aria-label="Explain row ' + (index + 1) + '"' + (index === current ? ' aria-current="step"' : '') + '>' + (index + 1) + '</button>';
+        const entry = row.added ? dictionaryEntry(row.added) : '<span class="end-note">—</span>';
+        const first = compressing ? '<span class="remaining"><mark>' + phrase(row.found) + '</mark>' + phrase(row.remaining.slice(row.found.length)) + '</span>' : outputCode(row.code);
+        const cells = compressing ? '<td class="found-text">' + phrase(row.found) + (row.code >= 256 ? ' ' + tagged(row.code) : '') + '</td><td>' + outputCode(row.code) + '</td><td>' + entry + '</td>' : '<td class="found-text">' + phrase(row.output) + '</td><td>' + entry + '</td>';
+        return '<tr data-row="' + index + '" class="' + (index === current ? 'active' : index > current ? 'future' : '') + '"><td>' + button + first + '</td>' + cells + '</tr>';
+      }).join('');
+      $('table-hint').textContent = (compressing ? 'Highlighted text is the phrase consumed in that row. ' : '“First Character” keeps the slide heading; it means the next compressed code. ') + (complete[mode] ? 'Select a row number to explain it.' : 'Use Next row to reveal the next step, or show the complete table.');
+    }
+    function renderDictionary(rows, current) {
+      const entries = rows.slice(0, current + 1).map(row => row.added).filter(Boolean);
+      $('dictionary-step').textContent = 'After row ' + (current + 1) + ' · ' + (mode === 'compress' ? 'encoder' : 'decoder');
+      const latest = rows[current].added?.code;
+      $('dictionary-list').innerHTML = entries.length ? entries.map(entry => '<div class="dict-entry' + (entry.code === latest ? ' latest' : '') + '"><span>' + entry.code + '</span><span class="phrase">' + phrase(entry.phrase) + '</span></div>').join('') : '<p class="dictionary-empty">No new entries yet.<br>Only the initial codes 0–255.</p>';
+      $('next-code').textContent = 'Next free code: ' + (256 + entries.length);
+      $('dictionary-list').scrollTop = $('dictionary-list').scrollHeight;
+    }
+    function renderOutput(rows, current) {
+      const last = current === rows.length - 1;
+      const shown = rows.slice(0, current + 1);
+      $('output-title').textContent = mode === 'compress' ? (last ? 'Complete compressed output' : 'Compressed output so far') : (last ? 'Complete decoded output' : 'Decoded output so far');
+      $('output-count').textContent = mode === 'compress' ? shown.length + (shown.length === 1 ? ' code' : ' codes') : shown.reduce((sum, row) => sum + row.output.length, 0) + ' of ' + result.bytes.length + ' bytes';
+      if (mode === 'compress') {
+        $('output-stream').className = 'code-stream';
+        $('output-stream').textContent = shown.map(row => LZW.codeText(row.code)).join('');
+        $('numeric-codes').textContent = shown.map(row => row.code).join(', ');
+      } else {
+        $('output-stream').className = 'stream-parts';
+        $('output-stream').innerHTML = shown.map((row, index) => '<span class="stream-piece' + (index === current ? ' current' : '') + '" title="Output from row ' + (index + 1) + '">' + phrase(row.output) + '</span>').join('');
+        const bytes = shown.map(row => row.output).join('');
+        $('restored-text').textContent = LZW.textFromBytes(bytes, !last);
+        $('restored-status').className = last ? 'pass' : 'partial';
+        $('restored-status').textContent = last ? '✓ Joined output matches the input exactly' : 'Join the pieces to rebuild the text. Incomplete UTF-8 characters appear when their bytes are complete.';
+      }
+      $('numeric-details').hidden = mode !== 'compress';
+      $('restored-block').hidden = mode !== 'decompress';
+    }
+    function render() {
+      const rows = rowsFor(), current = positions[mode];
+      document.querySelectorAll('[data-mode]').forEach(tab => { const active = tab.dataset.mode === mode; tab.setAttribute('aria-selected', String(active)); tab.tabIndex = active ? 0 : -1; });
+      $('table-panel').setAttribute('aria-labelledby', mode + '-tab');
+      $('table-title').textContent = mode === 'compress' ? 'Build the compression table' : 'Rebuild the text from the codes';
+      $('table-rule').textContent = mode === 'compress' ? 'Find the longest known phrase, output its code, then add that phrase plus the next byte to the dictionary.' : 'Start again with codes 0–255. For each code, write its phrase and add: previous output + the first byte of the current output.';
+      $('step-count').textContent = 'Row ' + (current + 1) + ' of ' + rows.length;
+      $('previous').disabled = current === 0;
+      $('next').disabled = current === rows.length - 1;
+      $('restart').disabled = current === 0 && !complete[mode];
+      $('show-all').disabled = complete[mode];
+      $('progress-fill').style.width = ((current + 1) / rows.length * 100) + '%';
+      renderExplanation(rows[current], current);
+      renderTable(rows, current);
+      renderDictionary(rows, current);
+      renderOutput(rows, current);
+    }
+    function navigate(nextMode, row, showAll = false) {
+      if (!modes.includes(nextMode)) throw new Error('Choose compression or decompression.');
+      const rows = nextMode === 'compress' ? result.compression.rows : result.decompression.rows;
+      if (!Number.isInteger(row) || row < 0 || row >= rows.length) throw new Error('Choose a row within the current table.');
+      mode = nextMode;
+      positions[mode] = row;
+      if (showAll) complete[mode] = true;
+      render();
+      const target = $('table-body').querySelector('tr.active');
+      if (target) {
+        const scroller = $('table-scroll');
+        const top = target.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop - $('table-head').offsetHeight;
+        if (top < scroller.scrollTop || top + target.offsetHeight > scroller.scrollTop + scroller.clientHeight) scroller.scrollTop = Math.max(0, top);
+      }
+    }
+    $('input-form').addEventListener('submit', event => { event.preventDefault(); submit(); });
+    $('text-input').addEventListener('input', () => { updateInputSize(); feedback('Text changed. Click Create tables to update the worked example.'); });
+    $('text-mode').addEventListener('change', () => feedback('Text mode changed. Click Create tables to update the worked example.'));
+    document.querySelectorAll('[data-example]').forEach(button => button.addEventListener('click', () => { const example = examples[button.dataset.example]; createTables(example.text, example.mode); }));
+    document.querySelectorAll('[data-mode]').forEach(tab => {
+      tab.addEventListener('click', () => navigate(tab.dataset.mode, positions[tab.dataset.mode]));
+      tab.addEventListener('keydown', event => {
+        if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+        event.preventDefault();
+        const nextMode = event.key === 'Home' ? 'compress' : event.key === 'End' ? 'decompress' : mode === 'compress' ? 'decompress' : 'compress';
+        navigate(nextMode, positions[nextMode]);
+        $(nextMode + '-tab').focus();
+      });
+    });
+    $('previous').addEventListener('click', () => navigate(mode, Math.max(0, positions[mode] - 1)));
+    $('next').addEventListener('click', () => navigate(mode, Math.min(rowsFor().length - 1, positions[mode] + 1)));
+    $('restart').addEventListener('click', () => { complete[mode] = false; navigate(mode, 0); $('table-scroll').scrollTop = 0; });
+    $('show-all').addEventListener('click', () => navigate(mode, rowsFor().length - 1, true));
+    $('table-body').addEventListener('click', event => {
+      const target = event.target.closest('[data-row]');
+      if (!target) return;
+      const clickedButton = event.target.closest('button');
+      const row = Number(target.dataset.row);
+      navigate(mode, row);
+      if (clickedButton) $('table-body').querySelector('button[data-row="' + row + '"]')?.focus({ preventScroll: true });
+    });
+    $('download-app').addEventListener('click', () => {
+      const clone = document.documentElement.cloneNode(true);
+      clone.querySelector('#text-input').textContent = $('text-input').value;
+      clone.querySelectorAll('#text-mode option').forEach(option => { if (option.value === $('text-mode').value) option.setAttribute('selected', 'selected'); else option.removeAttribute('selected'); });
+      const url = URL.createObjectURL(new Blob(['<!doctype html>\n', clone.outerHTML], { type: 'text/html;charset=utf-8' }));
+      const link = document.createElement('a');
+      link.href = url; link.download = 'lzw-table-lab.html'; document.body.appendChild(link); link.click(); link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
+    });
+    submit();
+    if (!result) createTables(examples.never.text, examples.never.mode);
+    if (document.modelContext?.registerTool) {
+      const lifecycle = new AbortController();
+      const registrations = [
+        { name: 'create_lzw_tables', title: 'Create LZW tables', description: 'Replace the visible worked example with compression and decompression tables for the supplied text.', inputSchema: { type: 'object', properties: { text: { type: 'string' }, textMode: { type: 'string', enum: ['exact', 'slide57'] } }, required: ['text'], additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: true }, execute(input) {
+          if (!input || typeof input.text !== 'string' || (input.textMode !== undefined && !['exact', 'slide57'].includes(input.textMode))) throw new Error('Supply text and a valid textMode.');
+          const next = createTables(input.text, input.textMode ?? 'exact');
+          return { text: next.text, codes: next.compression.codes, rows: next.compression.rows.length, codeWidth: next.width, originalBits: next.originalBits, encodedBits: next.encodedBits, restoredText: next.restored };
+        } },
+        { name: 'show_lzw_row', title: 'Explain an LZW row', description: 'Select a one-based row in the current example and show its explanation and dictionary. Optionally reveal the complete table.', inputSchema: { type: 'object', properties: { direction: { type: 'string', enum: ['compress', 'decompress'] }, row: { type: 'integer', minimum: 1 }, showCompleteTable: { type: 'boolean' } }, required: ['direction', 'row'], additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: true }, execute(input) {
+          if (!input || !Number.isInteger(input.row) || (input.showCompleteTable !== undefined && typeof input.showCompleteTable !== 'boolean')) throw new Error('Supply a direction and a valid row number.');
+          navigate(input.direction, input.row - 1, input.showCompleteTable ?? false);
+          const row = rowsFor()[positions[mode]];
+          return { direction: mode, row: input.row, code: row.code, output: mode === 'compress' ? LZW.codeText(row.code) : LZW.phraseText(row.output), added: row.added ? { code: row.added.code, phrase: LZW.phraseText(row.added.phrase) } : null };
+        } }
+      ];
+      for (const tool of registrations) { try { Promise.resolve(document.modelContext.registerTool(tool, { signal: lifecycle.signal })).catch(error => console.warn('LZW assistant tools unavailable.', error)); } catch (error) { console.warn('LZW assistant tools unavailable.', error); } }
+      window.addEventListener('pagehide', event => { if (!event.persisted) lifecycle.abort(); });
+    }
+  })();
+  </script>
+</body>
+</html>
